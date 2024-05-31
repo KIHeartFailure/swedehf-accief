@@ -1,0 +1,286 @@
+---
+title: "Statistical report: Charlson Comorbidity Index (CCI) in Heart Failure across the Ejection Fraction spectrum: association with clinical characteristics, EF category, medical therapy and outcomes"
+subtitle: Draft
+date: "`r Sys.Date()`"
+cover: static/ki_logo_vert_rgb.png
+editor: source
+format:
+  pdf:
+    documentclass: scrartcl
+    template-partials:
+      - "static/before-body.tex"
+      - "static/_titlepage.tex"
+    include-in-header: 
+      - "static/in-header.tex"
+    toc: true
+    toc-depth: 3
+    toc-title: Contents
+    lof: true
+    lot: true
+    cap-location: top
+    number-sections: true
+    colorlinks: false
+    keep-tex: false
+bibliography: static/references.bib
+csl: static/bmj.csl
+link-citations: true
+link-bibliography: true
+nocite: '@*'
+knitr:
+  opts_chunk: 
+    dev: cairo_pdf
+    collapse: true
+    comment: "" 
+    echo: FALSE
+    include: TRUE
+    warning: FALSE
+    message: FALSE
+    fig.pos: "H"
+    fig.path: "../output/figs/"
+    fig.height: 6
+    fig.width: 10
+    R.options:
+      knitr.graphics.auto_pdf: true
+---
+
+```{r}
+#| label: set-up-load-data
+options(knitr.kable.NA = "")
+
+# load packages, globals and project specific functions
+source(here::here("setup/setup.R"))
+
+# load data
+load(here("data/clean-data/rsdata.RData"))
+
+# load workbook to write tables to Excel
+wb <- loadWorkbook(here("output/tabs/tables.xlsx"))
+sheets <- names(wb)
+
+# load pptx file with figs
+figs <- officer::read_pptx(path = here::here("output/figs/figs.pptx"))
+pptx <- FALSE
+```           
+
+\newpage
+
+# Data
+
+## Data sources
+
+The Swedish Heart Failure Registry (SwedeHF) is an ongoing nationwide quality registry started in 2000, 
+that includes in- and out-hospital patients with HF, regardless of EF and previous history of HF[@swedehf]. 
+Around 80 variables are recorded at 
+discharge from hospital or at the outpatient visit, i.e. index date, and 
+entered into an electronic database managed by the Uppsala Clinical Research 
+Center (Uppsala, Sweden). Up to April 2017 the only inclusion criterion was a 
+clinical diagnosis of HF, which was thereafter defined according to the ICD-10 
+codes I50.0, I50.1, I50.9, I42.0, I42.6, I42.7, I25.5, I11.0, I13.0, I13.2. 
+In 2022, 69 of 76 Swedish hospitals enrolled patients in SwedeHF, which had a 32% coverage of the prevalent HF population in Sweden[@annualreport]. 
+
+SwedeHF was linked with national Swedish registries (SHFDB version 4.2.0) through the 
+Swedish personal identity number (PIN)[@pin]: 
+
+- The National Patient Register (The National Board of Health and Welfare) for additional comorbidities and outcomes
+- The Cause of Death Register[@dors] (The National Board of Health and Welfare) for outcomes death
+- Longitudinal integrated database for health insurance and labour market studies (LISA)[@lisa] 
+and the Register of the Total Population (Statistics Sweden) for socio-economic factors
+
+## Acknowledgments
+
+Please include "We thank all staff members at care units reporting into the SwedeHF registry for their contribution." 
+in the Acknowledgements of any resulting articles. 
+
+## Ethics and Informed consent
+
+The study was approved by the Swedish Ethical Review Authority, dnr 2021-04326. 
+Individual consent was not required, but patients were informed of entry into SwedeHF and able to opt‐out.
+
+## Inclusion/exclusion criteria
+
+```{r}
+#| label: tbl-flow
+#| tbl-cap: Information for flowchart
+#| tbl-pos: "H"
+
+default_kable(flow) %>%
+  row_spec(c(1, 11), bold = T)
+```
+
+First patient in: `r min(rsdata$shf_indexdtm)` and last patient in: `r max(rsdata$shf_indexdtm)` 
+from approximately `r rsdata %>% distinct(shf_centre) %>% count() %>% pull(n)` enrolling centers. 
+
+Baseline for this population is date of visits or date of discharge for the visit/hospitalization recorded in SwedeHF. 
+
+## Definitions
+
+Information on data sources, definitions etc. are found https://kiheartfailure.github.io/shfdb4/.
+
+{{< include src/vars.qmd >}}
+
+### Charlson Comorbidity Index
+
+The Charlson Comorbidity Index is calculated according to [@cci] using ICD-10 and ICD-9 codes for 10 years 
+prior to baseline (except for CHF which all patients were considered to have) and also including age.
+
+# Statistical analysis 
+
+## General
+
+All analyses were performed using `r sessionInfo()$R.version$version.string` [@r]. 
+The level of significance is set to 5%, two-sided. No adjustment for multiple 
+comparisons were made and therefore the results should be viewed with care.
+
+## Missing data
+
+Missing data was imputed with multiple imputation (n = 10) using mice [@mice] 
+and Rubin’s rules was used for combining estimates and standard errors across imputed data sets. 
+Variables included in the model are indicated in @tbl-base. CCI was not included in the model. 
+The primary outcome, `r outvars %>% filter(primary) %>% pull(name)`, was included as the Nelson-Aalen estimator 
+in the model but itself not imputed since it contained no missing values.
+
+## Subgroups
+
+All analyses are presented by EF defined as HFrEF (LVEF <40%), HFrEF (LVEF 40-49%) and HFpEF (LVEF $\geq$ 50%). 
+
+## Baseline characteristics
+
+Baseline characteristics are presented by EF. 
+Categorical variables are presented with n and percentage and tested for 
+differences between groups with the chi-square test. 
+Continuous variables are presented with median [first quartile-third quartile] and tested for 
+differences between groups with the Kruskal-Wallis test. 
+
+## Association between CCI and EF
+
+Needs to be decided if you want to have cci as a continuous or categorical variable. 
+
+## Association between outcomes and CCI across EF
+
+The following outcomes are considered: 
+
+- `r paste0(outvars$name[1], " (", outvars$shortname[1], ") (primary outcome)")`
+- `r paste0(outvars$name[2], " (", outvars$shortname[2], ")")`
+- `r paste0(outvars$name[3], " (", outvars$shortname[3], ")")`
+- `r paste0(outvars$name[4], " (", outvars$shortname[4], ")")`
+- `r paste0(outvars$name[5], " (", outvars$shortname[5], ")")`
+- `r paste0(outvars$name[6], " (", outvars$shortname[6], ")")`
+
+Time to first events were presented with cumulative incidence curves by EF och CCI. 
+
+Crude and adjusted analyses were performed where adjustment was performed for 
+variables indicated in @tbl-base. 
+
+Cox proportional hazards regressions were used to model the time to first event. 
+
+Data were censored at `r global_followup_year` years ?????SHOULD THE TIME BE CUT? follow-up, 2023-12-31 or emigration from Sweden. 
+In the Cox proportional hazard regression censoring was also performed at death from other causes than the event. 
+
+### Assumptions
+
+TO BE CHECKED::: The proportional hazards assumption was investigated using the scaled Schoenfeld 
+residuals for the primary outcome leading to that XXX  was stratified for in the models. 
+Possible outliers were visually inspected by plotting the dfbetas. 
+
+\clearpage
+
+# Results
+
+```{r}
+med <- rsdata %>%
+  summarise(
+    med = fn(median(shf_age), dig = 0),
+    q1 = fn(quantile(shf_age, probs = 0.25), dig = 0),
+    q3 = fn(quantile(shf_age, probs = 0.75), dig = 0)
+  ) %>%
+  mutate(out = paste0(med, " (", q1, "-", q3, ")")) %>%
+  pull(out)
+
+percfem <- rsdata %>%
+  count(shf_sex) %>%
+  mutate(perc = fn(n / sum(n) * 100, 0)) %>%
+  filter(shf_sex == "Female") %>%
+  pull(perc)
+```
+
+The median (q1-q3) age is `r med` and `r percfem`% females.    
+
+## Baseline characteristics
+
+To do: Add comorbs that create the cci and include age groups according to points in cci?
+
+{{< include src/base_tab.qmd >}}
+
+Please select one: 
+
+{{< include src/bar.qmd >}}
+
+## Association between CCI and EF
+
+Scatterplot, just to show the problem. 
+
+{{< include src/efcci.qmd >}}
+
+If you want to keep cci as a continuous variable suggest just add the crude and adjusted coefficients to the one of the alternative barplots. Should cci or ef by the outcome?
+
+## Association between outcomes and CCI across EF
+
+```{r}
+medsurv <- rsdata %>%
+  summarise(
+    med = fn(median(sos_outtime_death / 365.25), dig = 0),
+    min = fn(min(sos_outtime_death / 365.25), dig = 0),
+    max = fn(max(sos_outtime_death / 365.25), dig = 0)
+  ) %>%
+  mutate(out = paste0(med, " (", min, "-", max, ")")) %>%
+  pull(out)
+
+sumsurv <- rsdata %>%
+  summarise(sumpy = fn(sum(sos_outtime_death) / 365.25, dig = 0)) %>%
+  pull(sumpy)
+```
+
+The median (min-max) follow-up is 
+`r medsurv` years for a total of `r sumsurv` patient-years of follow-up.
+
+## Questions/comments: 
+
+Let me know your preferred cut-off(s) for acci, I think a categorical acci is needed for some of the plots/tabs. If going to use the cut-offs for results suggest > 1 cut-off, but for distribution plots can have continuous. 
+
+Are hospitalizations first event or repeated? Suggest keep it simple, don’t do both if not relevant/necessary for the research question. 
+
+Suggest replace fig 3 with table (with that many outcomes and a few acci groups and crude and adjusted it will not be very readable and you might also want some sens analyses). After looking at the numbers you can consider a figure that you can make from the numbers in the table. 
+
+Regarding Fig 4 (Forest plot or spline. In HFrEF and HFmrEF for RAS, ARNi, SGLT2i, association with outcomes according to CCI, in HFpEF only for SGLT2i). 
+
+1.	Is RASiARNI indicated in HFmrEF? Suggest skip mrEF. 
+2.	You need to consider RASi/ARNi combined (patients on RASi, will not get ARNi and vice versa)
+3.	Why not also bbl and mra?
+4.	Sglt2 was indicated for r, mr, p at different time points in Sweden (and for pef not so long ago). So you will need to do subgroups analyses for the relevant time periods (and different for r/pef). I would suggest you skip sglt2 for pef since the follow-up will not be long enough to consider outcomes. From what time period do you want to look at sglt2 in ref (from nov 2020?)? 
+
+
+When analyses are performed separately in the EF groups (for example Fig 3), should it be modelled using an interaction (so you also test if the association between cci and the outcomes are different across EF), or should it be modelled in “real” subgroups?
+
+How long follow-up is relevant (we have up to 20 years for some patients, should there perhaps be a maximum fu time?)
+
+# Reproducibility
+
+## R code
+
+The R code for all data handling and statistical analyses are found: 
+
+https://github.com/KIHeartFailure/swedehf-ccief. On publication
+the repository will be made public so as to 
+link to it from the resulting article for increased transparency and code sharing.
+No data or output is stored in the repository. 
+
+## R session information {#sessioninfo}
+
+```{r sessinfo}
+sessionInfo()
+```
+
+# References
+
+::: {#refs}
+:::

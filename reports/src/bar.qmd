@@ -1,0 +1,99 @@
+
+```{r}
+#| label: fig-barplot
+#| cache: true
+#| cache.comments: false
+#| fig-cap: "CCI by EF alternative 1"
+
+p <- ggplot(rsdata, aes(x = sos_com_charlsonciage, after_stat(density), color = shf_ef_cat, linetype = shf_ef_cat)) +
+  geom_freqpoly(binwidth = 1, linewidth = 1.5) +
+  scale_color_manual(values = global_cols) +
+  scale_y_continuous(limits = c(0, .25)) +
+  theme_classic() +
+  theme(
+    panel.grid.major = element_line(
+      color = "lightgrey",
+      linewidth = 0.5,
+      linetype = 2
+    ),
+    text = element_text(size = 27, face = "bold"),
+    legend.position = "bottom",
+    legend.box = "vertical",
+    legend.title = element_blank(),
+    axis.text = element_text(color = "black"),
+    axis.title.x = element_blank()
+  ) +
+  labs(y = "Density")
+
+if (pptx) {
+  create_pptx(p)
+}
+p
+```
+
+```{r}
+#| label: fig-barplot-2
+#| cache: true
+#| cache.comments: false
+#| fig-cap: "CCI by EF - alternative 2"
+
+figdata <- rsdata %>%
+  group_by(shf_ef_cat) %>%
+  count(sos_com_charlsonciage_cat, .drop = F) %>%
+  mutate(per = n / sum(n) * 100) %>%
+  ungroup() %>%
+  mutate(
+    sos_com_charlsonciage_cat = str_replace_all(sos_com_charlsonciage_cat, ">=", "\u2265"),
+    sos_com_charlsonciage_cat = fct_inorder(sos_com_charlsonciage_cat)
+  )
+
+p <- ggplot(figdata, aes(x = shf_ef_cat, y = per, fill = sos_com_charlsonciage_cat)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  scale_fill_manual(values = global_cols[1:4]) +
+  scale_y_continuous(limits = c(0, 100)) +
+  theme_classic() +
+  theme(
+    text = element_text(size = 27, face = "bold"),
+    legend.position = "bottom",
+    legend.box = "vertical",
+    axis.text = element_text(color = "black"),
+    axis.title.x = element_blank()
+  ) +
+  labs(y = "Proportion (%)", fill = "CCI") +
+  geom_text(aes(label = fn(per, dec = 0)), position = position_dodge(width = 0.9), vjust = -0.25, size = 8, fontface = "bold")
+
+if (pptx) {
+  create_pptx(p)
+}
+p
+```
+
+```{r}
+#| label: fig-barplot-3
+#| cache: true
+#| cache.comments: false
+#| fig-cap: "CCI by EF - alternative 3"
+#| fig-width: 8
+#| fig-height: 6
+
+p <- ggplot(rsdata, aes(x = sos_com_charlsonciage, after_stat(density))) +
+  geom_histogram(binwidth = 1, linewidth = 1.5, color = global_cols[1], fill = global_cols[1]) +
+  geom_freqpoly(binwidth = 1, linewidth = 1.5, color = global_cols[2]) +
+  scale_y_continuous(limits = c(0, .25)) +
+  theme_classic() +
+  theme(
+    text = element_text(size = 27, face = "bold"),
+    legend.position = "bottom",
+    legend.box = "vertical",
+    legend.title = element_blank(),
+    axis.text = element_text(color = "black"),
+    axis.title.x = element_blank()
+  ) +
+  labs(y = "Density") +
+  facet_wrap("shf_ef_cat", nrow = 3)
+
+if (pptx) {
+  create_pptx(p, width = 8, height = 6)
+}
+p
+```
