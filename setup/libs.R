@@ -20,6 +20,14 @@ library(here)
 # desk stat
 library(tableone)
 
+# outcomes
+library(survival)
+library(MASS) # neg bin model
+library(epitools)
+library(survminer) # check assumptions
+library(splines)
+library(reda) # for MCF (repeated events)
+
 # plots
 library(ggplot2)
 library(ggrepel)

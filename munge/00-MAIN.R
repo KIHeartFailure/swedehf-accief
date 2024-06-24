@@ -16,8 +16,9 @@ load(here(paste0(shfdbpath, "data/v421/meta_statreport.RData")))
 # swedehf
 source(here("munge/01-vars.R"))
 source(here("munge/02-pop-selection.R"))
-source(here("munge/03-fix-vars.R"))
-# source(here("munge/04-mi.R"))
+source(here("munge/03-npr-outcome.R"))
+source(here("munge/04-fix-vars.R"))
+source(here("munge/05-mi.R"))
 
 # Cache/save data ---------------------------------------------------------
 
@@ -25,11 +26,15 @@ save(
   file = here("data/clean-data/rsdata.RData"),
   list = c(
     "rsdata",
-    # "imprsdata",
+    "imprsdata",
+    "imprsdataref",
+    "imprsdatamref",
+    "imprsdatapef",
     "flow",
     "modvars",
     "tabvars",
     "outvars",
+    "stratavars",
     "metavars",
     "deathmeta",
     "outcommeta"

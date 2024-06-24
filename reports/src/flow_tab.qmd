@@ -1,0 +1,169 @@
+```{r}
+#| label: tbl-flowbase
+#| cache: true
+#| cache.comments: false
+#| tbl-cap: "Baseline characteristics for flow chart"
+#| tbl-pos: "H"
+
+flowtabfunc <- function(x, data, stratavar, catdig = 0, contdig = 0) {
+  tmp <- data %>%
+    filter(!is.na(!!sym(x)) & !is.na(!!sym(stratavar)))
+
+  cl <- class(data %>% pull(!!sym(x)))
+  if (cl %in% c("character", "factor")) {
+    out <- tmp %>%
+      group_by(!!sym(stratavar), .drop = F) %>%
+      count(!!sym(x), .drop = F) %>%
+      mutate(
+        out = paste0(n, " (", fn(n / sum(n) * 100, catdig), ")"),
+        out = case_when(
+          sum(n) == 0 ~ "-",
+          n < 10 ~ "<10",
+          TRUE ~ out
+        ),
+        level = !!sym(x)
+      ) %>%
+      ungroup() %>%
+      select(!!sym(stratavar), out, level) %>%
+      pivot_wider(names_from = !!sym(stratavar), values_from = out)
+
+    # if levels No, Yes only present Yes
+    levs <- out %>% pull(level)
+    nlevs <- length(levs)
+    if (nlevs == 2 & all(levs %in% c("No", "Yes"))) {
+      out <- out %>%
+        filter(level == "Yes") %>%
+        mutate(
+          var = x,
+          level = NA
+        )
+    } else {
+      out <- out %>%
+        mutate(
+          var = NA
+        )
+      out <- out %>% add_row(
+        var = x,
+        .before = 1
+      )
+    }
+  } else if (cl %in% c("numeric", "integer")) {
+    out <- tmp %>%
+      group_by(!!sym(stratavar), .drop = F) %>%
+      reframe(
+        med = quantile(!!sym(x), na.rm = T, probs = c(0.5)),
+        q1 = quantile(!!sym(x), na.rm = T, probs = c(0.25)),
+        q3 = quantile(!!sym(x), na.rm = T, probs = c(0.75)),
+        n = n()
+      ) %>%
+      mutate(
+        out = paste0(fn(med, contdig), " [", fn(q1, contdig), "-", fn(q3, contdig), "]"),
+        out = case_when(
+          n == 0 ~ "-",
+          n < 10 ~ "<10",
+          TRUE ~ out
+        )
+      ) %>%
+      ungroup() %>%
+      select(!!sym(stratavar), out) %>%
+      pivot_wider(names_from = !!sym(stratavar), values_from = out)
+
+    out <- out %>%
+      mutate(
+        var = x
+      )
+  } else {
+    stop("Unknown class in baseline table")
+  }
+}
+
+tab <- rsdata %>%
+  count(shf_ef_cat, .drop = F) %>%
+  mutate(n = paste0(n, " (", fn(n / sum(n) * 100, 0), ")")) %>%
+  pivot_wider(names_from = shf_ef_cat, values_from = n) %>%
+  mutate(
+    var = "N (%)",
+    level = NA
+  ) %>%
+  select(var, level, levels(rsdata %>% pull(shf_ef_cat)))
+
+tabtmp <- sapply(c("shf_age", "shf_age_cat", "shf_sex", "sos_com_charlsonciage", "sos_com_charlsonciage_cat"),
+  FUN = flowtabfunc, data = rsdata,
+  stratavar = "shf_ef_cat"
+)
+
+tabtmp <- bind_rows(tabtmp)
+tab <- bind_rows(tab, tabtmp)
+
+tab <- tab %>%
+  mutate(
+    # if recoding or categorizing will still get org label
+    var_tmp = str_replace_all(var, "(_cat2|_cat)", ""),
+    # if shf/sos combination  will still get org label
+    var_tmp = str_replace_all(var_tmp, "shf_sos_com_", "sos_com_")
+  )
+
+tab <- left_join(tab,
+  metavars %>%
+    select(variable, label, unit),
+  by = c("var_tmp" = "variable")
+) %>%
+  mutate(
+    Variable = coalesce(label, var_tmp),
+    Variable = if_else(!is.na(unit),
+      paste0(Variable, " (", unit, ")"),
+      Variable
+    ),
+    Variable = if_else(!is.na(level) & !is.na(Variable),
+      paste0(Variable, " ", level),
+      coalesce(Variable, paste0("  ", level))
+    )
+  ) %>%
+  select(Variable, HFrEF:HFpEF)
+
+cn <- c("Variable", levels(rsdata %>% pull(shf_ef_cat)))
+cn <- str_remove(cn, "Yes ")
+
+# excel
+tab_xls <- tab %>%
+  mutate(
+    Variable = str_remove_all(Variable, "textsuperscript|\\}|\\{"),
+    Variable = str_replace_all(Variable, "\\\\", " ")
+  )
+
+make_one_xlsxsheet(tab_xls, colnames = cn)
+
+# footnotes
+tab <- tab %>%
+  mutate(
+    # so no probs
+    Variable = sanitize_text(Variable),
+    Variable = str_replace_all(Variable, fixed("²"), "\\textsuperscript{2}"),
+    Variable = str_replace_all(Variable, fixed("$>$="), "$\\geq$"),
+    Variable = str_replace_all(Variable, fixed("$<$="), "$\\leq$")
+  )
+
+indent_rows <- tab %>%
+  mutate(
+    indent_rows = str_detect(Variable, "  "),
+    rows = row_number()
+  ) %>%
+  filter(indent_rows) %>%
+  pull(rows)
+
+cn <- sanitize_text(cn)
+
+default_kable(tab,
+  scale_down = F,
+  escape = FALSE,
+  col.names = cn
+) %>%
+  add_indent(indent_rows) %>%
+  footnote(
+    general_title = "",
+    general = c(
+      "Categorical variables are presented with n (%) and continuous variables with median [q1-q3]."
+    ),
+    threeparttable = T
+  )
+```

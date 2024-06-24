@@ -2,7 +2,6 @@
 
 tabvars <- c(
   "sos_com_charlsonciage",
-  "sos_com_charlsonciage_cat",
   # demo
   "shf_indexyear_cat",
   "shf_sex",
@@ -16,6 +15,7 @@ tabvars <- c(
 
   # clinical factors and lab measurements
   "shf_durationhf",
+  "shf_ef_cat",
   "shf_nyha",
   "shf_nyha_cat",
   "shf_bmi",
@@ -103,13 +103,15 @@ tabvars_not_in_mod <- c(
 modvars <- tabvars[!(tabvars %in% tabvars_not_in_mod)]
 
 outvars <- tibble(
-  var = c("sos_out_deathcvhosphf", "sos_out_deathcv", "sos_out_hosphf", "sos_out_death", "sos_out_hospany", "sos_out_deathnoncv"),
-  time = c("sos_outtime_hosphf", "sos_outtime_death", "sos_outtime_hosphf", "sos_outtime_death", "sos_outtime_hospny", "sos_outtime_death"),
-  shortname = c("CV death/1st HFH", "CV death", "1st HFH", "Death", "1st hospitalization", "Non-CV death"),
-  name = c("Composite CV death or First HF hospitalization", "CV death", "First HF hospitalization", "All-cause death", "First all-cause hospitalization", "Non-CV death"),
-  composite = c(T, F, F, F, F, F),
-  rep = c(F, F, F, F, F, F),
-  primary = c(T, F, F, F, F, F),
-  order = c(6, 2, 5, 1, 4, 3)
+  var = c("sos_out_deathcvhosphf", "sos_out_deathcv", "sos_out_hosphf", "sos_out_death", "sos_out_hospany", "sos_out_deathnoncv", "sos_out_counthosphf", "sos_out_counthospany"),
+  time = c("sos_outtime_hosphf", "sos_outtime_death", "sos_outtime_hosphf", "sos_outtime_death", "sos_outtime_hospany", "sos_outtime_death", "sos_outtime_death", "sos_outtime_death"),
+  shortname = c("CV death/1st HFH", "CV death", "1st HFH", "Death", "1st hospitalization", "Non-CV death", "HFH", "Hospitalization"),
+  name = c("Composite CV death or First HF hospitalization", "CV death", "First HF hospitalization", "All-cause death", "First all-cause hospitalization", "Non-CV death", "HF hospitalization", "All-cause hospitalization"),
+  composite = c(T, F, F, F, F, F, F, F),
+  rep = c(F, F, F, F, F, F, T, T),
+  primary = c(T, F, F, F, F, F, F, F),
+  order = c(8, 2, 5, 1, 4, 3, 7, 6)
 ) %>%
   arrange(order)
+
+stratavars <- c("shf_location")

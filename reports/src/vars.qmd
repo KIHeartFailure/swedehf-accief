@@ -6,7 +6,7 @@
 #| tbl-pos: "H"
 
 vars <- bind_rows(
-  tibble(var = c("sos_com_charlsonci", tabvars)),
+  tibble(var = tabvars),
   outvars %>%
     filter(!composite & !rep) %>%
     select(var, name),
