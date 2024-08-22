@@ -13,7 +13,7 @@ tabvars <- c(
   "shf_followuphfunit",
   "shf_followuplocation_cat",
 
-  # clinical factors and lab measurements
+  # clinical factors
   "shf_durationhf",
   "shf_ef_cat",
   "shf_nyha",
@@ -26,13 +26,6 @@ tabvars <- c(
   "shf_map",
   "shf_heartrate",
   "shf_heartrate_cat",
-  "shf_gfrckdepi",
-  "shf_gfrckdepi_cat",
-  "shf_potassium",
-  "shf_potassium_cat",
-  "shf_hb",
-  "shf_ntprobnp",
-  "shf_ntprobnp_cat",
 
   # comorbs
   "shf_smoke_cat",
@@ -49,9 +42,17 @@ tabvars <- c(
 
   # treatments
   "shf_rasiarni",
+  "shf_rasiarnidosetg",
+  "shf_rasiarnidosetg_cat",
   "shf_bbl",
+  "shf_bbldosetg",
+  "shf_bbldosetg_cat",
   "shf_mra",
+  "shf_mradosetg",
+  "shf_mradosetg_cat",
   "shf_sglt2",
+  "shf_sglt2dosetg",
+  "shf_sglt2dosetg_cat",
   "shf_diuretic",
   "shf_nitrate",
   "shf_digoxin",
@@ -59,6 +60,15 @@ tabvars <- c(
   "shf_asaantiplatelet",
   "shf_statin",
   "shf_device_cat",
+
+  # lab measurements
+  "shf_gfrckdepi",
+  "shf_gfrckdepi_cat",
+  "shf_potassium",
+  "shf_potassium_cat",
+  "shf_hb",
+  "shf_ntprobnp",
+  "shf_ntprobnp_cat",
 
   # socec
   "scb_famtype",
@@ -86,8 +96,8 @@ tabvars_not_in_mod <- c(
   "shf_potassium",
   "shf_potassium_cat",
   "shf_bmi",
-  "sos_com_charlsonci",
-  "sos_com_charlsonci_cat",
+  "sos_com_charlsonciage",
+  "sos_com_charlsonciage_cat",
   "shf_qol",
   "shf_qol_cat",
   "shf_sglt2",
@@ -97,7 +107,15 @@ tabvars_not_in_mod <- c(
   "sos_com_liver",
   "shf_sos_com_diabetes",
   "sos_com_cancer3y",
-  "shf_gfrckdepi_cat"
+  "shf_gfrckdepi_cat",
+  "shf_rasiarnidosetg",
+  "shf_rasiarnidosetg_cat",
+  "shf_bbldosetg",
+  "shf_bbldosetg_cat",
+  "shf_mradosetg",
+  "shf_mradosetg_cat",
+  "shf_sglt2dosetg",
+  "shf_sglt2dosetg_cat"
 )
 
 modvars <- tabvars[!(tabvars %in% tabvars_not_in_mod)]
@@ -115,3 +133,29 @@ outvars <- tibble(
   arrange(order)
 
 stratavars <- c("shf_location")
+
+metavars <- bind_rows(
+  metavars,
+  tibble(
+    variable = c(
+      "shf_rasiarnidosetg",
+      "shf_rasiarnidosetg_cat",
+      "shf_bbldosetg",
+      "shf_bbldosetg_cat",
+      "shf_mradosetg",
+      "shf_mradosetg_cat",
+      "shf_sglt2dosetg",
+      "shf_sglt2dosetg_cat"
+    ),
+    label = c(
+      "Target dose ACEi/ARB/ARNi (%)",
+      "Target dose ACEi/ARB/ARNi (%)",
+      "Target dose beta-blocker (%)",
+      "Target dose beta-blocker (%)",
+      "Target dose MRA (%)",
+      "Target dose MRA (%)",
+      "Target dose SGLT2i (%)",
+      "Target dose SGLT2i (%)"
+    )
+  )
+)

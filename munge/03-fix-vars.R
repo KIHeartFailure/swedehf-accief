@@ -12,55 +12,87 @@ rsdata <- rsdata %>%
     censdtm = pmin(shf_indexdtm + global_followup, censdtm),
     shf_arbdosetg = case_when(
       shf_arbsub == "Candesartan" ~ shf_arbdose / 32,
+      shf_arbsub == "Eprosartan" ~ shf_arbdose / 800,
+      shf_arbsub == "Irbesartan" ~ shf_arbdose / 300,
       shf_arbsub == "Losartan" ~ shf_arbdose / 150,
+      shf_arbsub == "Telmisartan" ~ shf_arbdose / 80,
       shf_arbsub == "Valsartan" ~ shf_arbdose / 320
     ),
     shf_aceidosetg = case_when(
-      shf_aceisub == "Ramipril" ~ shf_aceidose / 10,
       shf_aceisub == "Captopril" ~ shf_aceidose / 150,
-      shf_aceisub == "Enalapril" ~ shf_aceidose / 20,
-      shf_aceisub == "Lisinopril" ~ shf_aceidose / 35
+      shf_aceisub == "Cilazapril" ~ shf_aceidose / 5,
+      shf_aceisub == "Enalapril" ~ shf_aceidose / 40,
+      shf_aceisub == "Fosinopril" ~ shf_aceidose / 40,
+      shf_aceisub == "Kinapril" ~ shf_aceidose / 40,
+      shf_aceisub == "Lisinopril" ~ shf_aceidose / 35,
+      shf_aceisub == "Perindopril" ~ shf_aceidose / 8,
+      shf_aceisub == "Ramipril" ~ shf_aceidose / 10,
+      shf_aceisub == "Trandolapril" ~ shf_aceidose / 4
     ),
     shf_arnidosetg = case_when(
       shf_arnidose %in% c("194/206") ~ 1,
       shf_arnidose %in% c("97/103", "98/102", "146/154") ~ 0.5,
       shf_arnidose %in% c("49/51", "48/52", "73/77") ~ 0.25,
-      shf_arnidose %in% c("24/26") ~ 0.125,
+      shf_arnidose %in% c("24/26") ~ 0.125
     ),
     shf_rasiarnidosetg = pmax(shf_arbdosetg, shf_aceidosetg, na.rm = T),
-    shf_rasiarnidosetg = pmax(shf_rasiarnidosetg, shf_arnidosetg, na.rm = T),
+    shf_rasiarnidosetg = pmax(shf_rasiarnidosetg, shf_arnidosetg, na.rm = T) * 100,
+    shf_rasiarnidosetg = if_else(shf_rasiarni == "No" | is.na(shf_rasiarni), NA_real_, shf_rasiarnidosetg),
     shf_rasiarnidosetg_cat = factor(
       case_when(
-        shf_rasiarni == "No" | is.na(shf_rasiarni) ~ 0,
-        shf_rasiarnidosetg < .5 ~ 1,
-        shf_rasiarnidosetg < 1 ~ 2,
-        shf_rasiarnidosetg >= 1 ~ 3
+        shf_rasiarnidosetg < 50 ~ 1,
+        shf_rasiarnidosetg < 100 ~ 2,
+        shf_rasiarnidosetg >= 100 ~ 3
       ),
-      levels = 0:3, labels = c("No/Missing ACEi/ARB/ARNi", "1-49", "50-99", ">=100")
+      levels = 1:3, labels = c("1-49", "50-99", ">=100")
     ),
     shf_bbldosetg = case_when(
+      shf_bblsub == "Atenolol" ~ shf_bbldose / 100,
       shf_bblsub == "Bisoprolol" ~ shf_bbldose / 10,
       shf_bblsub == "Carvedilol" ~ shf_bbldose / 50,
-      shf_bblsub == "Metoprolol" ~ shf_bbldose / 200
-    ),
+      shf_bblsub == "Labetalol" ~ shf_bbldose / 400,
+      shf_bblsub == "Metoprolol" ~ shf_bbldose / 200,
+      shf_bblsub == "Pindolol" ~ shf_bbldose / 15,
+      shf_bblsub == "Propanolol" ~ shf_bbldose / 160,
+      shf_bblsub == "Sotalol" ~ shf_bbldose / 320
+    ) * 100,
+    shf_bbldosetg = if_else(shf_bbl == "No" | is.na(shf_bbl), NA_real_, shf_bbldosetg),
     shf_bbldosetg_cat = factor(
       case_when(
-        shf_bbl == "No" | is.na(shf_bbl) ~ 0,
-        shf_bbldosetg < .5 ~ 1,
-        shf_bbldosetg < 1 ~ 2,
-        shf_bbldosetg >= 1 ~ 3
+        shf_bbldosetg < 50 ~ 1,
+        shf_bbldosetg < 100 ~ 2,
+        shf_bbldosetg >= 100 ~ 3
       ),
-      levels = 0:3, labels = c("No/Missing Beta-blocker", "1-49", "50-99", ">=100")
+      levels = 1:3, labels = c("1-49", "50-99", ">=100")
     ),
-    shf_mradosetg = shf_mradose / 50,
+    shf_mradosetg = shf_mradose / 50 * 100,
+    shf_mradosetg = if_else(shf_mra == "No" | is.na(shf_mra), NA_real_, shf_mradosetg),
     shf_mradosetg_cat = factor(
       case_when(
-        shf_mra == "No" | is.na(shf_mra) ~ 0,
         shf_mradosetg < .5 ~ 1,
         shf_mradosetg < 1 ~ 2,
         shf_mradosetg >= 1 ~ 3
       ),
-      levels = 0:3, labels = c("No/Missing MRA", "1-49", "50-99", ">=100")
+      levels = 1:3, labels = c("1-49", "50-99", ">=100")
+    ),
+    shf_sglt2 = case_when(
+      shf_indexdtm < ymd("2021-11-01") ~ NA_character_,
+      TRUE ~ shf_sglt2
+    ),
+    shf_sglt2dosetg = case_when(
+      shf_sglt2sub == "Dapagliflozin" ~ shf_sglt2dose / 10,
+      shf_sglt2sub == "Empagliflozin" ~ shf_sglt2dose / 10,
+      shf_sglt2sub == "Ertugliflozin" ~ shf_sglt2dose / 15,
+      shf_sglt2sub == "Kanagliflozin" ~ shf_sglt2dose / 300
+    ) * 100,
+    shf_sglt2dosetg = if_else(shf_sglt2 == "No" | is.na(shf_sglt2), NA_real_, shf_sglt2dosetg),
+    shf_sglt2dosetg_cat = factor(
+      case_when(
+        shf_sglt2dosetg < 50 ~ 1,
+        shf_sglt2dosetg < 100 ~ 2,
+        shf_sglt2dosetg >= 100 ~ 3
+      ),
+      levels = 1:3, labels = c("1-49", "50-99", ">=100")
     ),
     shf_indexyear_cat = factor(case_when(
       shf_indexyear <= 2010 ~ "2000-2010",
@@ -78,14 +110,14 @@ rsdata <- rsdata %>%
     sos_com_charlsonciage_cat = factor(
       case_when(
         sos_com_charlsonciage <= 3 ~ 1,
-        sos_com_charlsonciage <= 7 ~ 2,
-        sos_com_charlsonciage >= 8 ~ 3
+        sos_com_charlsonciage <= 6 ~ 2,
+        sos_com_charlsonciage >= 7 ~ 3
       ),
       levels = 1:3,
       labels = c(
         "1-3",
-        "4-7",
-        ">=8"
+        "4-6",
+        ">=7"
       )
     )
   )

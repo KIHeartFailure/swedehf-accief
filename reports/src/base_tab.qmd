@@ -35,8 +35,8 @@ basetabfunc_inner <- function(x, data, stratavar, catdig, contdig) {
 
     # p-value
     check <- tmp %>%
-      count(!!sym(stratavar), !is.na(!!sym(x)))
-    if (nrow(check) >= 2) {
+      count(!!sym(stratavar), !!sym(x))
+    if (nrow(check) >= 4) {
       p <- fn(chisq.test(tmp %>% pull(!!sym(stratavar)), tmp %>% pull(!!sym(x)))$p.value, p = T, dig = 3)
     } else {
       p <- "-"
@@ -185,7 +185,7 @@ basetabfunc <- function(data, novars = NULL) {
   footnotetext <- c(
     "Included in multiple imputation and regression models.",
     "Included in the CRF 2006.",
-    "Included in the CRF 28 April 2021."
+    "Only from 1 November 2021."
   )
 
   # excel

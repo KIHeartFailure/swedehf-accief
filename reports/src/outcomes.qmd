@@ -208,7 +208,7 @@ outcomesfunc_outer <- function(data, impdata, novars) {
       footnote_order = c("general", "symbol", "alphabet"),
       general_title = "",
       general = c(
-        "Abbreviations: py, person-years"
+        "Abbreviations: No, Number, py, person-years"
       ),
       threeparttable = T
     )
@@ -221,6 +221,7 @@ outcomesfunc_outer <- function(data, impdata, novars) {
 #| cache.comments: false
 #| dependson: outcomesfunc
 #| tbl-cap: "Association between outcomes and CCI"
+#| tbl-pos: "H"
 
 outcomesfunc_outer(data = rsdata, impdata = imprsdata, novars = NULL)
 ```
@@ -231,6 +232,7 @@ outcomesfunc_outer(data = rsdata, impdata = imprsdata, novars = NULL)
 #| cache.comments: false
 #| dependson: outcomesfunc
 #| tbl-cap: "Association between outcomes and CCI - HFrEF"
+#| tbl-pos: "H"
 
 outcomesfunc_outer(data = rsdata %>% filter(shf_ef_cat == "HFrEF"), impdata = imprsdataref, novars = "shf_ef_cat")
 ```
@@ -241,6 +243,7 @@ outcomesfunc_outer(data = rsdata %>% filter(shf_ef_cat == "HFrEF"), impdata = im
 #| cache.comments: false
 #| dependson: outcomesfunc
 #| tbl-cap: "Association between outcomes and CCI - HFmrEF"
+#| tbl-pos: "H"
 
 outcomesfunc_outer(data = rsdata %>% filter(shf_ef_cat == "HFmrEF"), impdata = imprsdatamref, novars = "shf_ef_cat")
 ```
@@ -251,6 +254,7 @@ outcomesfunc_outer(data = rsdata %>% filter(shf_ef_cat == "HFmrEF"), impdata = i
 #| cache.comments: false
 #| dependson: outcomesfunc
 #| tbl-cap: "Association between outcomes and CCI - HFpEF"
+#| tbl-pos: "H"
 
 outcomesfunc_outer(data = rsdata %>% filter(shf_ef_cat == "HFpEF"), impdata = imprsdatapef, novars = "shf_ef_cat")
 ```

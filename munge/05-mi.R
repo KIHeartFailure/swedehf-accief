@@ -3,7 +3,7 @@
 modvarstmp <- modvars
 
 rsdatauseforimp <- rsdata %>%
-  select(lopnr, shf_indexdtm, !!!syms(modvarstmp), contains(outvars$var), !!!syms(outvars$time), contains("sos_com_charlsonciage"))
+  select(lopnr, shf_indexdtm, shf_sglt2, !!!syms(modvarstmp), contains(outvars$var), !!!syms(outvars$time), contains("sos_com_charlsonciage"))
 
 noimpvars <- names(rsdatauseforimp)[!names(rsdatauseforimp) %in% modvars]
 

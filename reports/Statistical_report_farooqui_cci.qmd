@@ -127,9 +127,7 @@ prior to baseline (except for CHF which all patients were considered to have) an
 
 ## GDMT
 
-Please specify what time periods to look at SGLT2 in ref, mref and pef respectively. 
-
-Please specify target doses (see e-mail). 
+For the SGLT2i analysis only patients from 1 November 2021 will be considered. 
 
 ## EF
 
@@ -161,6 +159,9 @@ differences between groups with the Kruskal-Wallis test.
 
 ## Association between CCI and EF
 
+The association between CCI and EF (EF as dependent variable) was evaluated using a multivariable multinominal regression 
+including the variables indicated in @tbl-base. The variables were selected based on clinical relevance. 
+
 ## Association between outcomes and CCI across EF
 
 The following outcomes are considered: 
@@ -174,16 +175,18 @@ The following outcomes are considered:
 - `r paste0(outvars$name[7], " (", outvars$shortname[7], ")")`
 - `r paste0(outvars$name[8], " (", outvars$shortname[8], ") (primary outcome)")`
 
-Time to first events were presented with cumulative incidence curves by EF och CCI. 
+Time to first events were presented with cumulative incidence curves and 
+the mean cumulative function was used to depict the recurrent events by EF och CCI. 
 
 Crude and adjusted analyses were performed where adjustment was performed for 
 variables indicated in @tbl-base. 
 
-Cox proportional hazards regressions were used to model the time to first event. Recurrent events were model using a negative binomial regression including the 
-log of time as an offset in the model. 
+Cox proportional hazards regressions were used to model the time to first event. Recurrent events were model using a negative binomial regression including the log of time as an offset in the model. 
 
-Data were censored at `r global_followup_year` years ?????SHOULD use compelte follow-up (up to 22 years) or should use max X years???? follow-up, 2023-12-31 or emigration from Sweden. 
+Data were censored at `r global_followup_year` years, follow-up, 2023-12-31 or emigration from Sweden. 
 In the Cox proportional hazard regression censoring was also performed at death from other causes than the event. 
+
+The association between GDMT and outcomes across CCI subgroups was modelled using interaction effects. 
 
 ### Assumptions
 
@@ -216,13 +219,13 @@ The median (q1-q3) age is `r med` and `r percfem`% females.
 
 ## Baseline characteristics
 
-Please check variables in model and tables carefully. Should anything be added? Should age be adjusted for in model?
-
 {{< include src/base_tab.qmd >}}
 
 ## Association between CCI and EF
 
 {{< include src/bar.qmd >}}
+
+{{< include src/acci_ef.qmd >}}
 
 \clearpage
 
@@ -247,6 +250,10 @@ The median (min-max) follow-up is
 `r medsurv` years for a total of `r sumsurv` patient-years of follow-up.
 
 {{< include src/outcomes.qmd >}}
+\clearpage
+{{< include src/km_figs.qmd >}}
+\clearpage
+{{< include src/outcomes_med.qmd >}}
 
 \clearpage
 
@@ -256,7 +263,7 @@ The median (min-max) follow-up is
 
 The R code for all data handling and statistical analyses are found: 
 
-https://github.com/KIHeartFailure/swedehf-ccief. On publication
+https://github.com/KIHeartFailure/swedehf-accief. On publication
 the repository will be made public so as to 
 link to it from the resulting article for increased transparency and code sharing.
 No data or output is stored in the repository. 

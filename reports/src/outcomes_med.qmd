@@ -1,0 +1,320 @@
+```{r}
+#| label: outcomesmedfunc
+#| cache: true
+#| cache.comments: false
+
+modvarstmp <- setdiff(modvars, "shf_ef_cat")
+coxvars <- setdiff(modvars, "shf_ef_cat")
+coxvars[coxvars %in% stratavars] <- paste0("strata(", coxvars[coxvars %in% stratavars], ")")
+
+outcomesfunc_inner <- function(ef, impdata, time, event, eventname, xvar = "sos_com_charlsonciage_cat", medvar,
+                               rep = FALSE, novars = NULL) {
+  data <- rsdata %>% filter(shf_ef_cat %in% ef)
+
+  modvarstmp <- setdiff(modvarstmp, novars)
+  coxvars <- setdiff(coxvars, novars)
+
+  levs <- levels(data %>% pull(!!sym(xvar)))
+  nlevs <- length(levs)
+
+  nrows <- 2
+  out <- data.frame(matrix(NA, ncol = 4 + nlevs, nrow = nrows))
+  colnames(out) <- c("Outcome", "Treatment", "Model", levs, "p-value interaction")
+
+  out[1, 1] <- eventname
+  out[1, 2] <- medvar
+
+  for (i in 1:nlevs) {
+    if (!rep) {
+      ## 2 row - crude regression
+      out[1, 3] <- "Crude Hazard Ratio (95% CI), p-value"
+      mod <- summary(modraw <- coxph(
+        formula(paste0(
+          "Surv(", time, ",", event, "== 'Yes') ~ ",
+          medvar, " * relevel(", xvar, ", ref = '", levs[i], "')"
+        )),
+        data = data
+      ))
+
+      out[1, 3 + i] <-
+        paste0(
+          fn(mod$conf.int[1, "exp(coef)"], dig = 2),
+          " (", fn(mod$conf.int[1, "lower .95"], dig = 2),
+          "-", fn(mod$conf.int[1, "upper .95"], dig = 2), "), ",
+          fn(mod$coef[1, "Pr(>|z|)"], dig = 3, p = TRUE)
+        )
+
+      if (i == 1) {
+        pint <- car::Anova(modraw, type = 3)
+        out[1, 7] <- fn(last(pint$`Pr(>Chisq)`), dig = 3, p = T)
+      }
+
+      ## 3 row - adjusted regression
+      out[2, 3] <- "Adjusted Hazard Ratio (95% CI), p-value"
+      modraw <- with(impdata, coxph(formula(paste0(
+        "Surv(", time, ",", event, " == 'Yes') ~ ",
+        medvar, " * relevel(", xvar, ", ref = '", levs[i], "') + ", paste(coxvars, collapse = " + ")
+      ))))
+
+      mod <- summary(pool(modraw))
+
+      out[2, 3 + i] <-
+        paste0(
+          fn(exp(mod$estimate[1]), dig = 2),
+          " (", fn(exp(mod$estimate[1] - global_z05 * mod$std.error[1]), dig = 2),
+          "-", fn(exp(mod$estimate[1] + global_z05 * mod$std.error[1]), dig = 2), "), ",
+          fn(mod$p.value[1], dig = 3, p = TRUE)
+        )
+
+      if (i == 1) {
+        mod_noint <- with(impdata, coxph(formula(paste0(
+          "Surv(", time, ",", event, " == 'Yes') ~ ",
+          medvar, " + relevel(", xvar, ", ref = '", levs[i], "') + ", paste(coxvars, collapse = " + ")
+        ))))
+
+        pint <- mice::D1(modraw, mod_noint)
+        out[2, 7] <- fn(pint$result[, "P(>F)"], p = T, dig = 3)
+      }
+    }
+
+    if (rep) {
+      ## 2 row - crude regression
+      out[1, 3] <- "Crude Rate Ratio (95% CI), p-value"
+      mod <- summary(modraw <- glm.nb(formula(paste0(event, " ~ ", medvar, " * relevel(", xvar, ", ref = '", levs[i], "') + offset(log(sos_outtime_death))")),
+        data = data %>% filter(sos_outtime_death > 0)
+      ))
+
+      out[1, 3 + i] <-
+        paste0(
+          fn(exp(mod$coefficients[2, 1]), dig = 2),
+          " (", fn(exp(mod$coefficients[2, 1] - global_z05 * mod$coefficients[2, 2]), dig = 2),
+          "-", fn(exp(mod$coefficients[2, 1] + global_z05 * mod$coefficients[2, 2]), dig = 2), "), ",
+          fn(mod$coefficients[2, 4], dig = 3, p = TRUE)
+        )
+
+      if (i == 1) {
+        pint <- car::Anova(modraw, type = "3", test.statistic = "Wald")
+        out[1, 7] <- fn(last(pint[, "Pr(>Chisq)"]), p = T, dig = 3)
+      }
+
+      ## 3 row - adjusted regression
+      impdata0 <- miceadds::subset_datlist(impdata, expr_subset = data %>% pull(sos_outtime_death) > 0)
+      modraw <- with(impdata0, glm.nb(formula(paste0(
+        event, " ~ ", medvar, " * relevel(", xvar, ", ref = '", levs[i], "') + offset(log(sos_outtime_death)) + ",
+        paste0(modvarstmp, collapse = " + ")
+      ))))
+      mod <- summary(pool(modraw))
+      out[2, 3] <- "Adjusted Rate Ratio (95% CI), p-value"
+      out[2, 3 + i] <-
+        paste0(
+          fn(exp(mod$estimate[2]), dig = 2),
+          " (", fn(exp(mod$estimate[2] - global_z05 * mod$std.error[2]), dig = 2),
+          "-", fn(exp(mod$estimate[2] + global_z05 * mod$std.error[2]), dig = 2), "), ",
+          fn(mod$p.value[2], dig = 3, p = TRUE)
+        )
+      if (i == 1) {
+        pint <- with(impdata0, car::Anova(
+          glm.nb(formula(paste0(
+            event, " ~ ", medvar, " * relevel(", xvar, ", ref = '", levs[i], "') + offset(log(sos_outtime_death)) + ",
+            paste0(modvarstmp, collapse = " + ")
+          ))),
+          type = 3, test.statistic = "Wald"
+        ))
+
+        nc <- length(pint[[1]]$`Chisq`)
+
+        chis2 <- c(
+          pint[[1]]$`Chisq`[nc],
+          pint[[2]]$`Chisq`[nc],
+          pint[[3]]$`Chisq`[nc],
+          pint[[4]]$`Chisq`[nc],
+          pint[[5]]$`Chisq`[nc],
+          pint[[6]]$`Chisq`[nc],
+          pint[[7]]$`Chisq`[nc],
+          pint[[8]]$`Chisq`[nc],
+          pint[[9]]$`Chisq`[nc],
+          pint[[10]]$`Chisq`[nc]
+        )
+
+        pintp <- miceadds::micombine.chisquare(
+          dk = chis2, df = pint[[1]]$Df[nc], display = FALSE
+        )
+
+        out[2, 7] <- fn(pintp[["p"]], p = T, dig = 3)
+      }
+    }
+  }
+  return(out)
+}
+
+outcomesfunc <- function(
+    ef,
+    impdata,
+    time,
+    event,
+    eventname,
+    rep) {
+  out4 <- outcomesfunc_inner(
+    ef = ef,
+    impdata = impdata,
+    time = time,
+    event = event,
+    eventname = eventname,
+    rep = rep,
+    medvar = "shf_sglt2",
+    novars = "shf_indexyear_cat"
+  )
+  if (!ef == "HFpEF") {
+    out1 <- outcomesfunc_inner(
+      ef = ef,
+      impdata = impdata,
+      time = time,
+      event = event,
+      eventname = eventname,
+      rep = rep,
+      medvar = "shf_rasiarni"
+    )
+    out2 <- outcomesfunc_inner(
+      ef = ef,
+      impdata = impdata,
+      time = time,
+      event = event,
+      eventname = eventname,
+      rep = rep,
+      medvar = "shf_bbl"
+    )
+    out3 <- outcomesfunc_inner(
+      ef = ef,
+      impdata = impdata,
+      time = time,
+      event = event,
+      eventname = eventname,
+      rep = rep,
+      medvar = "shf_mra"
+    )
+    outall <- rbind(out1, out2, out3, out4)
+  } else {
+    outall <- rbind(out4)
+  }
+  outall <- outall %>%
+    mutate(
+      Treatment = str_remove_all(Treatment, "shf_"),
+      Treatment = case_when(
+        Treatment == "rasiarni" ~ "ACEi/ARB/ARNi",
+        Treatment == "bbl" ~ "Beta-blocker",
+        Treatment == "mra" ~ "MRA",
+        Treatment == "sglt2" ~ "SGLT2i"
+      )
+    )
+}
+
+outcomesfunc_outer <- function(ef, impdata) {
+  out1 <- outcomesfunc(
+    ef = ef,
+    impdata = impdata,
+    time = outvars$time[1],
+    event = outvars$var[1],
+    eventname = outvars$name[1],
+    rep = outvars$rep[1]
+  )
+  out2 <- outcomesfunc(
+    ef = ef,
+    impdata = impdata,
+    time = outvars$time[2],
+    event = outvars$var[2],
+    eventname = outvars$name[2],
+    rep = outvars$rep[2]
+  )
+  out3 <- outcomesfunc(
+    ef = ef,
+    impdata = impdata,
+    time = outvars$time[3],
+    event = outvars$var[3],
+    eventname = outvars$name[3],
+    rep = outvars$rep[3]
+  )
+  out4 <- outcomesfunc(
+    ef = ef,
+    impdata = impdata,
+    time = outvars$time[4],
+    event = outvars$var[4],
+    eventname = outvars$name[4],
+    rep = outvars$rep[4]
+  )
+  out5 <- outcomesfunc(
+    ef = ef,
+    impdata = impdata,
+    time = outvars$time[5],
+    event = outvars$var[5],
+    eventname = outvars$name[5],
+    rep = outvars$rep[5]
+  )
+  out6 <- outcomesfunc(
+    ef = ef,
+    impdata = impdata,
+    time = outvars$time[6],
+    event = outvars$var[6],
+    eventname = outvars$name[6],
+    rep = outvars$rep[6]
+  )
+  nr <- 7
+  out7 <- outcomesfunc(
+    ef = ef,
+    impdata = impdata,
+    time = outvars$time[nr],
+    event = outvars$var[nr],
+    eventname = outvars$name[nr],
+    rep = outvars$rep[nr]
+  )
+  nr <- 8
+  out8 <- outcomesfunc(
+    ef = ef,
+    impdata = impdata,
+    time = outvars$time[nr],
+    event = outvars$var[nr],
+    eventname = outvars$name[nr],
+    rep = outvars$rep[nr]
+  )
+
+  outall <- rbind(out1, out2, out3, out4, out5, out6, out7, out8)
+
+  if (ef != "HFpEF") {
+    outall <- outall %>%
+      mutate(Outcome = if_else(Treatment == "ACEi/ARB/ARNi", Outcome, NA))
+  }
+  make_one_xlsxsheet(outall)
+
+  default_kable(outall) %>%
+    add_header_above(c(" " = 1, " " = 1, " " = 1, "Charlson Comorbidity Index" = 3, " " = 1))
+}
+```
+
+```{r}
+#| label: tbl-outcomes-med-ref
+#| cache: true
+#| cache.comments: false
+#| dependson: outcomesmedfunc
+#| tbl-cap: "Association between outcomes and CCI/GDMT - HFrEF"
+
+outcomesfunc_outer(ef = "HFrEF", impdata = imprsdataref)
+```
+
+```{r}
+#| label: tbl-outcomes-med-mref
+#| cache: true
+#| cache.comments: false
+#| dependson: outcomesmedfunc
+#| tbl-cap: "Association between outcomes and CCI/GDMT - HFmrEF"
+
+outcomesfunc_outer(ef = "HFmrEF", impdata = imprsdatamref)
+```
+
+```{r}
+#| label: tbl-outcomes-med-pef
+#| cache: true
+#| cache.comments: false
+#| dependson: outcomesmedfunc
+#| tbl-cap: "Association between outcomes and CCI/GDMT - HFpEF"
+
+outcomesfunc_outer(ef = "HFpEF", impdata = imprsdatapef)
+```

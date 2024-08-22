@@ -1,0 +1,294 @@
+```{r}
+#| label: kmfunc
+#| cache: true
+#| cache.comments: false
+#| dependson: tbl-outcomes
+
+kmfunc <- function(efcats = c("HFrEF", "HFmrEF", "HFpEF"), time, event, eventname, rep, xvar = "sos_com_charlsonciage_cat",
+                   labposadj = ifelse(rep, c(0.08, 0.08, 0.08), c(0.05, 0.05, 0.05))) {
+  data <- rsdata %>%
+    filter(shf_ef_cat %in% efcats)
+
+  if (rep) {
+    repdata <- rsdatarep %>%
+      filter(shf_ef_cat %in% efcats)
+  }
+
+  levs <- levels(data %>% pull(!!sym(xvar)))
+  nlevs <- length(levs)
+
+  # cox results
+  # cox <- paste0(
+  #  paste0(str_remove_all(cox[, "Model"], ", p-value"), ": "),
+  #  cox[, "Previous cancer"]
+  # )
+  # cox <- paste0(cox, collapse = "\n")
+  # cox <- str_replace_all(cox, "Hazard Ratio", "HR")
+  # cox <- str_replace_all(cox, "Rate Ratio", "RR")
+
+  if (!rep) {
+    fit <- survfit(formula(paste0("Surv(", time, ",", event, "== 'Yes') ~ ", xvar)),
+      data = data
+    )
+    s <- summary(fit, times = seq(0, global_followup, 1), extend = T)
+
+    plot_data <- tibble(
+      "time" = s$time,
+      "n.risk" = s$n.risk,
+      "n.event" = s$n.event,
+      "n.censor" = s$n.censor,
+      "estimate" = 1 - s$surv,
+      "strata" = s$strata
+    ) %>%
+      mutate(
+        strata = str_replace_all(strata, ">=", "\u2265"),
+        strata = fct_inorder(str_remove_all(strata, paste0(xvar, "=")))
+      )
+    ylim <- c(0, 1)
+    ylab <- paste0(eventname, " (%)")
+  }
+
+  if (rep) {
+    fit <- mcf(formula(paste0("Recur(sos_outtime, lopnr, sos_out_hosphf == 'Yes') ~ ", xvar)), data = repdata)
+
+    plot_data <- tibble(
+      "time" = fit@MCF$time,
+      "n.risk" = fit@MCF$numRisk,
+      "estimate" = fit@MCF$MCF,
+      "std.error" = fit@MCF$se,
+      "strata" = fit@MCF[[xvar]]
+    ) %>%
+      mutate(
+        strata = str_replace_all(strata, ">=", "\u2265"),
+        strata = fct_rev(factor(strata))
+      )
+
+    ylim <- c(0, 1.5)
+    ylab <- "Cum mean HFH (/100 pts)"
+  }
+
+  annotate_data <- plot_data %>%
+    filter(time <= 3 * 365) %>%
+    group_by(strata) %>%
+    slice(n()) %>%
+    ungroup()
+
+  p <- ggplot(plot_data, aes(x = time / 365, y = estimate, color = strata)) +
+    geom_step(aes(linetype = strata), linewidth = 1) +
+    scale_color_manual(values = c(global_cols[1:3])) +
+    # scale_x_continuous(breaks = seq(0, endfollow, 1), limits = c(0, endfollow), expand = c(0, 0)) +
+    # scale_y_continuous(labels = scales::label_percent(suffix = ""), limits = c(0, 1), expand = c(0, 0)) +
+    scale_x_continuous(breaks = seq(0, global_followup_year, 1), limits = c(0, global_followup_year)) +
+    scale_y_continuous(labels = scales::label_percent(suffix = ""), limits = ylim) +
+    theme_classic() +
+    theme(
+      text = element_text(size = 20),
+      legend.position = "none"
+    ) +
+    labs(x = "Follow-up (years)", y = ylab) +
+    geom_text(
+      data = annotate_data,
+      aes(x = time / 365, y = estimate, label = strata),
+      nudge_x = 0, nudge_y = labposadj, size = 6, hjust = 0
+    ) # +
+  # annotate("text", x = 0, y = max(ylim) - max(ylim) * 0.05, label = cox, hjust = 0, size = 6)
+
+  if (!rep) {
+    # n at risk
+    table_data <- plot_data %>%
+      filter(
+        time %in% c(seq(0, global_followup_year, 1) * 365)
+      ) %>%
+      mutate(
+        strata = str_replace_all(strata, ">=", "\u2265"),
+        strata = fct_rev(fct_inorder(strata))
+      )
+  }
+  if (rep) {
+    # n at risk
+    # needed for n at risk
+    fitn <- survfit(formula(paste0("Surv(sos_outtime_death, sos_out_death == 'Yes') ~ ", xvar)),
+      data = data
+    )
+    sn <- summary(fitn, times = seq(0, global_followup_year * 365, 1), extend = T)
+
+    table_data <- tibble(
+      "time" = sn$time,
+      "n.risk" = sn$n.risk,
+      "strata" = sn$strata
+    ) %>%
+      filter(
+        time %in% c(seq(0, global_followup_year, 1) * 365)
+      ) %>%
+      mutate(
+        strata = str_replace_all(strata, ">=", "\u2265"),
+        strata = fct_rev(fct_inorder(str_remove_all(strata, paste0(xvar, "="))))
+      )
+  }
+
+  t <- ggplot(table_data, aes(y = strata, x = time / 365)) +
+    geom_text(aes(label = n.risk), size = 6) +
+    # scale_x_continuous(breaks = seq(0, endfollow, 1), limits = c(0, endfollow), expand = c(0, 0)) +
+    # scale_y_discrete(expand = c(0, 0)) +
+    scale_x_continuous(breaks = seq(0, global_followup_year, 1), limits = c(0, global_followup_year)) +
+    coord_cartesian(xlim = c(0, global_followup_year), clip = "off") +
+    labs(subtitle = "No. at risk", y = "ACCI") +
+    theme(
+      plot.caption = element_text(size = 20),
+      panel.background = element_blank(),
+      text = element_text(size = 20),
+      axis.text.x = element_blank(),
+      axis.ticks = element_blank(),
+      axis.title.x = element_blank(),
+      # plot.margin = unit(c(0, 1, 0, 3), "cm"), # trouble
+      # axis.text.y = element_blank()
+      # axis.text.y = element_text(margin = margin(0, 0, 0, 100))
+      axis.text.y = element_text(hjust = 0, colour = "black")
+    )
+
+  km <- (p / t) + plot_layout(height = c(1, .25))
+  create_pptx(km)
+  km
+}
+```
+
+```{r}
+#| label: fig-cicmcf
+#| cache: true
+#| cache.comments: false
+#| dependson: kmfunc, outcomesfunc, tbl-outcomes
+#| fig-cap: "Cumulative incidence/Mean cumulative function"
+#| fig-subcap: !expr outvars$name[c(1, 5, 7)]
+#| layout-ncol: 2
+#| layout-nrow: 3
+
+nr <- 1
+kmfunc(
+  time = outvars$time[nr],
+  event = outvars$var[nr],
+  eventname = outvars$shortname[nr],
+  rep = outvars$rep[nr]
+)
+nr <- 5
+kmfunc(
+  time = outvars$time[nr],
+  event = outvars$var[nr],
+  eventname = outvars$shortname[nr],
+  rep = outvars$rep[nr]
+)
+nr <- 7
+kmfunc(
+  time = outvars$time[nr],
+  event = outvars$var[nr],
+  eventname = outvars$shortname[nr],
+  rep = outvars$rep[nr]
+)
+```
+
+```{r}
+#| label: fig-cicmcf-ref
+#| cache: true
+#| cache.comments: false
+#| dependson: kmfunc, outcomesfunc, tbl-outcomes-ref
+#| fig-cap: "Cumulative incidence/Mean cumulative function - HFrEF"
+#| fig-subcap: !expr outvars$name[c(1, 5, 7)]
+#| layout-ncol: 2
+#| layout-nrow: 1
+
+nr <- 1
+kmfunc(
+  efcats = "HFrEF",
+  time = outvars$time[nr],
+  event = outvars$var[nr],
+  eventname = outvars$shortname[nr],
+  rep = outvars$rep[nr]
+)
+nr <- 5
+kmfunc(
+  efcats = "HFrEF",
+  time = outvars$time[nr],
+  event = outvars$var[nr],
+  eventname = outvars$shortname[nr],
+  rep = outvars$rep[nr]
+)
+nr <- 7
+kmfunc(
+  efcats = "HFrEF",
+  time = outvars$time[nr],
+  event = outvars$var[nr],
+  eventname = outvars$shortname[nr],
+  rep = outvars$rep[nr]
+)
+```
+
+```{r}
+#| label: fig-cicmcf-mref
+#| cache: true
+#| cache.comments: false
+#| dependson: kmfunc, outcomesfunc, tbl-outcomes-ref
+#| fig-cap: "Cumulative incidence/Mean cumulative function - HFmrEF"
+#| fig-subcap: !expr outvars$name[c(1, 5, 7)]
+#| layout-ncol: 2
+#| layout-nrow: 1
+
+nr <- 1
+kmfunc(
+  efcats = "HFmrEF",
+  time = outvars$time[nr],
+  event = outvars$var[nr],
+  eventname = outvars$shortname[nr],
+  rep = outvars$rep[nr]
+)
+nr <- 5
+kmfunc(
+  efcats = "HFmrEF",
+  time = outvars$time[nr],
+  event = outvars$var[nr],
+  eventname = outvars$shortname[nr],
+  rep = outvars$rep[nr]
+)
+nr <- 7
+kmfunc(
+  efcats = "HFmrEF",
+  time = outvars$time[nr],
+  event = outvars$var[nr],
+  eventname = outvars$shortname[nr],
+  rep = outvars$rep[nr]
+)
+```
+
+```{r}
+#| label: fig-cicmcf-pef
+#| cache: true
+#| cache.comments: false
+#| dependson: kmfunc, outcomesfunc, tbl-outcomes-pef
+#| fig-cap: "Cumulative incidence/Mean cumulative function - HFpEF"
+#| fig-subcap: !expr outvars$name[c(1, 5, 7)]
+#| layout-ncol: 2
+#| layout-nrow: 3
+
+nr <- 1
+kmfunc(
+  efcats = "HFpEF",
+  time = outvars$time[nr],
+  event = outvars$var[nr],
+  eventname = outvars$shortname[nr],
+  rep = outvars$rep[nr]
+)
+nr <- 5
+kmfunc(
+  efcats = "HFpEF",
+  time = outvars$time[nr],
+  event = outvars$var[nr],
+  eventname = outvars$shortname[nr],
+  rep = outvars$rep[nr]
+)
+nr <- 7
+kmfunc(
+  efcats = "HFpEF",
+  time = outvars$time[nr],
+  event = outvars$var[nr],
+  eventname = outvars$shortname[nr],
+  rep = outvars$rep[nr]
+)
+```

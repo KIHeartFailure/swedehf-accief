@@ -5,6 +5,8 @@ source(here::here("setup/setup.R"))
 # Load data ---------------------------------------------------------------
 
 load(here(shfdbpath, "data/v421/rsdata421.RData"))
+# rsdata421 <- rsdata421 %>%
+#  head(10000)
 
 # Meta data ect -----------------------------------------------------------
 
@@ -16,8 +18,8 @@ load(here(paste0(shfdbpath, "data/v421/meta_statreport.RData")))
 # swedehf
 source(here("munge/01-vars.R"))
 source(here("munge/02-pop-selection.R"))
-source(here("munge/03-npr-outcome.R"))
-source(here("munge/04-fix-vars.R"))
+source(here("munge/03-fix-vars.R"))
+source(here("munge/04-npr-outcome.R"))
 source(here("munge/05-mi.R"))
 
 # Cache/save data ---------------------------------------------------------
@@ -30,6 +32,7 @@ save(
     "imprsdataref",
     "imprsdatamref",
     "imprsdatapef",
+    "rsdatarep",
     "flow",
     "modvars",
     "tabvars",
