@@ -73,3 +73,8 @@ for (i in seq_along(modvarstmp)) {
 imprsdataref <- mice::filter(imprsdata, rsdata$shf_ef_cat == "HFrEF")
 imprsdatamref <- mice::filter(imprsdata, rsdata$shf_ef_cat == "HFmrEF")
 imprsdatapef <- mice::filter(imprsdata, rsdata$shf_ef_cat == "HFpEF")
+
+imprsdata0 <- mice::filter(imprsdata, rsdata$sos_outtime_death > 0)
+imprsdataref0 <- mice::filter(imprsdata, rsdata$shf_ef_cat == "HFrEF" & rsdata$sos_outtime_death > 0)
+imprsdatamref0 <- mice::filter(imprsdata, rsdata$shf_ef_cat == "HFmrEF" & rsdata$sos_outtime_death > 0)
+imprsdatapef0 <- mice::filter(imprsdata, rsdata$shf_ef_cat == "HFpEF" & rsdata$sos_outtime_death > 0)

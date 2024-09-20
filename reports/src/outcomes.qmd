@@ -6,7 +6,7 @@
 coxvars <- modvars
 coxvars[modvars %in% stratavars] <- paste0("strata(", coxvars[modvars %in% stratavars], ")")
 
-outcomesfunc <- function(data, impdata, time, event, eventname, xvar = "sos_com_charlsonciage_cat",
+outcomesfunc <- function(data, impdata, impdatanb, time, event, eventname, xvar = "sos_com_charlsonciage_cat",
                          rep = FALSE, novars = NULL) {
   coxvars <- setdiff(coxvars, novars)
   modvars <- setdiff(modvars, novars)
@@ -102,8 +102,7 @@ outcomesfunc <- function(data, impdata, time, event, eventname, xvar = "sos_com_
     ))
 
     ## 3 row - adjusted regression
-    impdata0 <- miceadds::subset_datlist(impdata, expr_subset = data %>% pull(sos_outtime_death) > 0)
-    mod <- with(impdata0, glm.nb(formula(paste0(
+    mod <- with(impdatanb, glm.nb(formula(paste0(
       event, " ~ ", xvar, " + offset(log(sos_outtime_death)) + ",
       paste0(modvars, collapse = " + ")
     ))))
@@ -119,10 +118,11 @@ outcomesfunc <- function(data, impdata, time, event, eventname, xvar = "sos_com_
   return(out)
 }
 
-outcomesfunc_outer <- function(data, impdata, novars) {
+outcomesfunc_outer <- function(data, impdata, impdatanb, novars) {
   out1 <- outcomesfunc(
     data = data,
     impdata = impdata,
+    impdatanb = impdatanb,
     time = outvars$time[1],
     event = outvars$var[1],
     eventname = outvars$name[1],
@@ -132,6 +132,7 @@ outcomesfunc_outer <- function(data, impdata, novars) {
   out2 <- outcomesfunc(
     data = data,
     impdata = impdata,
+    impdatanb = impdatanb,
     time = outvars$time[2],
     event = outvars$var[2],
     eventname = outvars$name[2],
@@ -141,6 +142,7 @@ outcomesfunc_outer <- function(data, impdata, novars) {
   out3 <- outcomesfunc(
     data = data,
     impdata = impdata,
+    impdatanb = impdatanb,
     time = outvars$time[3],
     event = outvars$var[3],
     eventname = outvars$name[3],
@@ -150,6 +152,7 @@ outcomesfunc_outer <- function(data, impdata, novars) {
   out4 <- outcomesfunc(
     data = data,
     impdata = impdata,
+    impdatanb = impdatanb,
     time = outvars$time[4],
     event = outvars$var[4],
     eventname = outvars$name[4],
@@ -159,6 +162,7 @@ outcomesfunc_outer <- function(data, impdata, novars) {
   out5 <- outcomesfunc(
     data = data,
     impdata = impdata,
+    impdatanb = impdatanb,
     time = outvars$time[5],
     event = outvars$var[5],
     eventname = outvars$name[5],
@@ -168,6 +172,7 @@ outcomesfunc_outer <- function(data, impdata, novars) {
   out6 <- outcomesfunc(
     data = data,
     impdata = impdata,
+    impdatanb = impdatanb,
     time = outvars$time[6],
     event = outvars$var[6],
     eventname = outvars$name[6],
@@ -178,6 +183,7 @@ outcomesfunc_outer <- function(data, impdata, novars) {
   out7 <- outcomesfunc(
     data = data,
     impdata = impdata,
+    impdatanb = impdatanb,
     time = outvars$time[nr],
     event = outvars$var[nr],
     eventname = outvars$name[nr],
@@ -188,6 +194,7 @@ outcomesfunc_outer <- function(data, impdata, novars) {
   out8 <- outcomesfunc(
     data = data,
     impdata = impdata,
+    impdatanb = impdatanb,
     time = outvars$time[nr],
     event = outvars$var[nr],
     eventname = outvars$name[nr],
@@ -223,7 +230,7 @@ outcomesfunc_outer <- function(data, impdata, novars) {
 #| tbl-cap: "Association between outcomes and CCI"
 #| tbl-pos: "H"
 
-outcomesfunc_outer(data = rsdata, impdata = imprsdata, novars = NULL)
+outcomesfunc_outer(data = rsdata, impdata = imprsdata, impdatanb = imprsdata0, novars = NULL)
 ```
 
 ```{r}
@@ -234,7 +241,7 @@ outcomesfunc_outer(data = rsdata, impdata = imprsdata, novars = NULL)
 #| tbl-cap: "Association between outcomes and CCI - HFrEF"
 #| tbl-pos: "H"
 
-outcomesfunc_outer(data = rsdata %>% filter(shf_ef_cat == "HFrEF"), impdata = imprsdataref, novars = "shf_ef_cat")
+outcomesfunc_outer(data = rsdata %>% filter(shf_ef_cat == "HFrEF"), impdata = imprsdataref, impdatanb = imprsdataref0, novars = "shf_ef_cat")
 ```
 
 ```{r}
@@ -245,7 +252,7 @@ outcomesfunc_outer(data = rsdata %>% filter(shf_ef_cat == "HFrEF"), impdata = im
 #| tbl-cap: "Association between outcomes and CCI - HFmrEF"
 #| tbl-pos: "H"
 
-outcomesfunc_outer(data = rsdata %>% filter(shf_ef_cat == "HFmrEF"), impdata = imprsdatamref, novars = "shf_ef_cat")
+outcomesfunc_outer(data = rsdata %>% filter(shf_ef_cat == "HFmrEF"), impdata = imprsdatamref, impdatanb = imprsdatamref0, novars = "shf_ef_cat")
 ```
 
 ```{r}
@@ -256,5 +263,5 @@ outcomesfunc_outer(data = rsdata %>% filter(shf_ef_cat == "HFmrEF"), impdata = i
 #| tbl-cap: "Association between outcomes and CCI - HFpEF"
 #| tbl-pos: "H"
 
-outcomesfunc_outer(data = rsdata %>% filter(shf_ef_cat == "HFpEF"), impdata = imprsdatapef, novars = "shf_ef_cat")
+outcomesfunc_outer(data = rsdata %>% filter(shf_ef_cat == "HFpEF"), impdata = imprsdatapef, impdatanb = imprsdatapef0, novars = "shf_ef_cat")
 ```

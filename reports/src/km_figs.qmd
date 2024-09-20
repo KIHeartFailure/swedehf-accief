@@ -2,7 +2,6 @@
 #| label: kmfunc
 #| cache: true
 #| cache.comments: false
-#| dependson: tbl-outcomes
 
 kmfunc <- function(efcats = c("HFrEF", "HFmrEF", "HFpEF"), time, event, eventname, rep, xvar = "sos_com_charlsonciage_cat",
                    labposadj = ifelse(rep, c(0.08, 0.08, 0.08), c(0.05, 0.05, 0.05))) {
@@ -16,15 +15,6 @@ kmfunc <- function(efcats = c("HFrEF", "HFmrEF", "HFpEF"), time, event, eventnam
 
   levs <- levels(data %>% pull(!!sym(xvar)))
   nlevs <- length(levs)
-
-  # cox results
-  # cox <- paste0(
-  #  paste0(str_remove_all(cox[, "Model"], ", p-value"), ": "),
-  #  cox[, "Previous cancer"]
-  # )
-  # cox <- paste0(cox, collapse = "\n")
-  # cox <- str_replace_all(cox, "Hazard Ratio", "HR")
-  # cox <- str_replace_all(cox, "Rate Ratio", "RR")
 
   if (!rep) {
     fit <- survfit(formula(paste0("Surv(", time, ",", event, "== 'Yes') ~ ", xvar)),
@@ -156,7 +146,7 @@ kmfunc <- function(efcats = c("HFrEF", "HFmrEF", "HFpEF"), time, event, eventnam
 #| label: fig-cicmcf
 #| cache: true
 #| cache.comments: false
-#| dependson: kmfunc, outcomesfunc, tbl-outcomes
+#| dependson: kmfunc
 #| fig-cap: "Cumulative incidence/Mean cumulative function"
 #| fig-subcap: !expr outvars$name[c(1, 5, 7)]
 #| layout-ncol: 2
@@ -189,7 +179,7 @@ kmfunc(
 #| label: fig-cicmcf-ref
 #| cache: true
 #| cache.comments: false
-#| dependson: kmfunc, outcomesfunc, tbl-outcomes-ref
+#| dependson: kmfunc
 #| fig-cap: "Cumulative incidence/Mean cumulative function - HFrEF"
 #| fig-subcap: !expr outvars$name[c(1, 5, 7)]
 #| layout-ncol: 2
@@ -225,7 +215,7 @@ kmfunc(
 #| label: fig-cicmcf-mref
 #| cache: true
 #| cache.comments: false
-#| dependson: kmfunc, outcomesfunc, tbl-outcomes-ref
+#| dependson: kmfunc
 #| fig-cap: "Cumulative incidence/Mean cumulative function - HFmrEF"
 #| fig-subcap: !expr outvars$name[c(1, 5, 7)]
 #| layout-ncol: 2
@@ -261,7 +251,7 @@ kmfunc(
 #| label: fig-cicmcf-pef
 #| cache: true
 #| cache.comments: false
-#| dependson: kmfunc, outcomesfunc, tbl-outcomes-pef
+#| dependson: kmfunc
 #| fig-cap: "Cumulative incidence/Mean cumulative function - HFpEF"
 #| fig-subcap: !expr outvars$name[c(1, 5, 7)]
 #| layout-ncol: 2

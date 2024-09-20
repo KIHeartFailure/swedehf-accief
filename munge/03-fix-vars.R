@@ -97,7 +97,7 @@ rsdata <- rsdata %>%
     shf_indexyear_cat = factor(case_when(
       shf_indexyear <= 2010 ~ "2000-2010",
       shf_indexyear <= 2015 ~ "2011-2015",
-      shf_indexyear <= 2021 ~ "2016-2020",
+      shf_indexyear <= 2020 ~ "2016-2020",
       shf_indexyear <= 2023 ~ "2021-2023"
     )),
     shf_bpsys_cat = factor(

@@ -7,14 +7,12 @@ modvarstmp <- setdiff(modvars, "shf_ef_cat")
 coxvars <- setdiff(modvars, "shf_ef_cat")
 coxvars[coxvars %in% stratavars] <- paste0("strata(", coxvars[coxvars %in% stratavars], ")")
 
-outcomesfunc_inner <- function(ef, impdata, time, event, eventname, xvar = "sos_com_charlsonciage_cat", medvar,
+outcomesfunc_inner <- function(impdata, impdatanb, time, event, eventname, xvar = "sos_com_charlsonciage_cat", medvar,
                                rep = FALSE, novars = NULL) {
-  data <- rsdata %>% filter(shf_ef_cat %in% ef)
-
   modvarstmp <- setdiff(modvarstmp, novars)
   coxvars <- setdiff(coxvars, novars)
 
-  levs <- levels(data %>% pull(!!sym(xvar)))
+  levs <- levels(rsdata %>% pull(!!sym(xvar)))
   nlevs <- length(levs)
 
   nrows <- 2
@@ -28,25 +26,29 @@ outcomesfunc_inner <- function(ef, impdata, time, event, eventname, xvar = "sos_
     if (!rep) {
       ## 2 row - crude regression
       out[1, 3] <- "Crude Hazard Ratio (95% CI), p-value"
-      mod <- summary(modraw <- coxph(
-        formula(paste0(
-          "Surv(", time, ",", event, "== 'Yes') ~ ",
-          medvar, " * relevel(", xvar, ", ref = '", levs[i], "')"
-        )),
-        data = data
-      ))
+      modraw <- with(impdata, coxph(formula(paste0(
+        "Surv(", time, ",", event, " == 'Yes') ~ ",
+        medvar, " * relevel(", xvar, ", ref = '", levs[i], "')"
+      ))))
+
+      mod <- summary(pool(modraw))
 
       out[1, 3 + i] <-
         paste0(
-          fn(mod$conf.int[1, "exp(coef)"], dig = 2),
-          " (", fn(mod$conf.int[1, "lower .95"], dig = 2),
-          "-", fn(mod$conf.int[1, "upper .95"], dig = 2), "), ",
-          fn(mod$coef[1, "Pr(>|z|)"], dig = 3, p = TRUE)
+          fn(exp(mod$estimate[1]), dig = 2),
+          " (", fn(exp(mod$estimate[1] - global_z05 * mod$std.error[1]), dig = 2),
+          "-", fn(exp(mod$estimate[1] + global_z05 * mod$std.error[1]), dig = 2), "), ",
+          fn(mod$p.value[1], dig = 3, p = TRUE)
         )
 
       if (i == 1) {
-        pint <- car::Anova(modraw, type = 3)
-        out[1, 7] <- fn(last(pint$`Pr(>Chisq)`), dig = 3, p = T)
+        mod_noint <- with(impdata, coxph(formula(paste0(
+          "Surv(", time, ",", event, " == 'Yes') ~ ",
+          medvar, " + relevel(", xvar, ", ref = '", levs[i], "')"
+        ))))
+
+        pint <- mice::D1(modraw, mod_noint)
+        out[1, 7] <- fn(pint$result[, "P(>F)"], p = T, dig = 3)
       }
 
       ## 3 row - adjusted regression
@@ -80,26 +82,28 @@ outcomesfunc_inner <- function(ef, impdata, time, event, eventname, xvar = "sos_
     if (rep) {
       ## 2 row - crude regression
       out[1, 3] <- "Crude Rate Ratio (95% CI), p-value"
-      mod <- summary(modraw <- glm.nb(formula(paste0(event, " ~ ", medvar, " * relevel(", xvar, ", ref = '", levs[i], "') + offset(log(sos_outtime_death))")),
-        data = data %>% filter(sos_outtime_death > 0)
-      ))
-
+      modraw <- with(impdatanb, glm.nb(formula(paste0(
+        event, " ~ ", medvar, " * relevel(", xvar, ", ref = '", levs[i], "') + offset(log(sos_outtime_death))"
+      ))))
+      mod <- summary(pool(modraw))
       out[1, 3 + i] <-
         paste0(
-          fn(exp(mod$coefficients[2, 1]), dig = 2),
-          " (", fn(exp(mod$coefficients[2, 1] - global_z05 * mod$coefficients[2, 2]), dig = 2),
-          "-", fn(exp(mod$coefficients[2, 1] + global_z05 * mod$coefficients[2, 2]), dig = 2), "), ",
-          fn(mod$coefficients[2, 4], dig = 3, p = TRUE)
+          fn(exp(mod$estimate[2]), dig = 2),
+          " (", fn(exp(mod$estimate[2] - global_z05 * mod$std.error[2]), dig = 2),
+          "-", fn(exp(mod$estimate[2] + global_z05 * mod$std.error[2]), dig = 2), "), ",
+          fn(mod$p.value[2], dig = 3, p = TRUE)
         )
-
       if (i == 1) {
-        pint <- car::Anova(modraw, type = "3", test.statistic = "Wald")
-        out[1, 7] <- fn(last(pint[, "Pr(>Chisq)"]), p = T, dig = 3)
+        mod_noint <- with(impdatanb, glm.nb(formula(paste0(
+          event, " ~ ", medvar, " + relevel(", xvar, ", ref = '", levs[i], "') + offset(log(sos_outtime_death))"
+        ))))
+
+        pint <- mice::D1(modraw, mod_noint)
+        out[1, 7] <- fn(pint$result[, "P(>F)"], p = T, dig = 3)
       }
 
       ## 3 row - adjusted regression
-      impdata0 <- miceadds::subset_datlist(impdata, expr_subset = data %>% pull(sos_outtime_death) > 0)
-      modraw <- with(impdata0, glm.nb(formula(paste0(
+      modraw <- with(impdatanb, glm.nb(formula(paste0(
         event, " ~ ", medvar, " * relevel(", xvar, ", ref = '", levs[i], "') + offset(log(sos_outtime_death)) + ",
         paste0(modvarstmp, collapse = " + ")
       ))))
@@ -113,34 +117,13 @@ outcomesfunc_inner <- function(ef, impdata, time, event, eventname, xvar = "sos_
           fn(mod$p.value[2], dig = 3, p = TRUE)
         )
       if (i == 1) {
-        pint <- with(impdata0, car::Anova(
-          glm.nb(formula(paste0(
-            event, " ~ ", medvar, " * relevel(", xvar, ", ref = '", levs[i], "') + offset(log(sos_outtime_death)) + ",
-            paste0(modvarstmp, collapse = " + ")
-          ))),
-          type = 3, test.statistic = "Wald"
-        ))
+        mod_noint <- with(impdatanb, glm.nb(formula(paste0(
+          event, " ~ ", medvar, " + relevel(", xvar, ", ref = '", levs[i], "') + offset(log(sos_outtime_death)) + ",
+          paste0(modvarstmp, collapse = " + ")
+        ))))
 
-        nc <- length(pint[[1]]$`Chisq`)
-
-        chis2 <- c(
-          pint[[1]]$`Chisq`[nc],
-          pint[[2]]$`Chisq`[nc],
-          pint[[3]]$`Chisq`[nc],
-          pint[[4]]$`Chisq`[nc],
-          pint[[5]]$`Chisq`[nc],
-          pint[[6]]$`Chisq`[nc],
-          pint[[7]]$`Chisq`[nc],
-          pint[[8]]$`Chisq`[nc],
-          pint[[9]]$`Chisq`[nc],
-          pint[[10]]$`Chisq`[nc]
-        )
-
-        pintp <- miceadds::micombine.chisquare(
-          dk = chis2, df = pint[[1]]$Df[nc], display = FALSE
-        )
-
-        out[2, 7] <- fn(pintp[["p"]], p = T, dig = 3)
+        pint <- mice::D1(modraw, mod_noint)
+        out[2, 7] <- fn(pint$result[, "P(>F)"], p = T, dig = 3)
       }
     }
   }
@@ -150,13 +133,14 @@ outcomesfunc_inner <- function(ef, impdata, time, event, eventname, xvar = "sos_
 outcomesfunc <- function(
     ef,
     impdata,
+    impdatanb,
     time,
     event,
     eventname,
     rep) {
   out4 <- outcomesfunc_inner(
-    ef = ef,
     impdata = impdata,
+    impdatanb = impdatanb,
     time = time,
     event = event,
     eventname = eventname,
@@ -164,10 +148,10 @@ outcomesfunc <- function(
     medvar = "shf_sglt2",
     novars = "shf_indexyear_cat"
   )
-  if (!ef == "HFpEF") {
+  if (ef != "HFpEF") {
     out1 <- outcomesfunc_inner(
-      ef = ef,
       impdata = impdata,
+      impdatanb = impdatanb,
       time = time,
       event = event,
       eventname = eventname,
@@ -175,8 +159,8 @@ outcomesfunc <- function(
       medvar = "shf_rasiarni"
     )
     out2 <- outcomesfunc_inner(
-      ef = ef,
       impdata = impdata,
+      impdatanb = impdatanb,
       time = time,
       event = event,
       eventname = eventname,
@@ -184,8 +168,8 @@ outcomesfunc <- function(
       medvar = "shf_bbl"
     )
     out3 <- outcomesfunc_inner(
-      ef = ef,
       impdata = impdata,
+      impdatanb = impdatanb,
       time = time,
       event = event,
       eventname = eventname,
@@ -208,10 +192,11 @@ outcomesfunc <- function(
     )
 }
 
-outcomesfunc_outer <- function(ef, impdata) {
+outcomesfunc_outer <- function(ef, impdata, impdatanb) {
   out1 <- outcomesfunc(
     ef = ef,
     impdata = impdata,
+    impdatanb = impdatanb,
     time = outvars$time[1],
     event = outvars$var[1],
     eventname = outvars$name[1],
@@ -220,6 +205,7 @@ outcomesfunc_outer <- function(ef, impdata) {
   out2 <- outcomesfunc(
     ef = ef,
     impdata = impdata,
+    impdatanb = impdatanb,
     time = outvars$time[2],
     event = outvars$var[2],
     eventname = outvars$name[2],
@@ -228,6 +214,7 @@ outcomesfunc_outer <- function(ef, impdata) {
   out3 <- outcomesfunc(
     ef = ef,
     impdata = impdata,
+    impdatanb = impdatanb,
     time = outvars$time[3],
     event = outvars$var[3],
     eventname = outvars$name[3],
@@ -236,6 +223,7 @@ outcomesfunc_outer <- function(ef, impdata) {
   out4 <- outcomesfunc(
     ef = ef,
     impdata = impdata,
+    impdatanb = impdatanb,
     time = outvars$time[4],
     event = outvars$var[4],
     eventname = outvars$name[4],
@@ -244,6 +232,7 @@ outcomesfunc_outer <- function(ef, impdata) {
   out5 <- outcomesfunc(
     ef = ef,
     impdata = impdata,
+    impdatanb = impdatanb,
     time = outvars$time[5],
     event = outvars$var[5],
     eventname = outvars$name[5],
@@ -252,6 +241,7 @@ outcomesfunc_outer <- function(ef, impdata) {
   out6 <- outcomesfunc(
     ef = ef,
     impdata = impdata,
+    impdatanb = impdatanb,
     time = outvars$time[6],
     event = outvars$var[6],
     eventname = outvars$name[6],
@@ -261,6 +251,7 @@ outcomesfunc_outer <- function(ef, impdata) {
   out7 <- outcomesfunc(
     ef = ef,
     impdata = impdata,
+    impdatanb = impdatanb,
     time = outvars$time[nr],
     event = outvars$var[nr],
     eventname = outvars$name[nr],
@@ -270,6 +261,7 @@ outcomesfunc_outer <- function(ef, impdata) {
   out8 <- outcomesfunc(
     ef = ef,
     impdata = impdata,
+    impdatanb = impdatanb,
     time = outvars$time[nr],
     event = outvars$var[nr],
     eventname = outvars$name[nr],
@@ -296,7 +288,7 @@ outcomesfunc_outer <- function(ef, impdata) {
 #| dependson: outcomesmedfunc
 #| tbl-cap: "Association between outcomes and CCI/GDMT - HFrEF"
 
-outcomesfunc_outer(ef = "HFrEF", impdata = imprsdataref)
+outcomesfunc_outer(ef = "HFrEF", impdata = imprsdataref, impdatanb = imprsdataref0)
 ```
 
 ```{r}
@@ -306,7 +298,7 @@ outcomesfunc_outer(ef = "HFrEF", impdata = imprsdataref)
 #| dependson: outcomesmedfunc
 #| tbl-cap: "Association between outcomes and CCI/GDMT - HFmrEF"
 
-outcomesfunc_outer(ef = "HFmrEF", impdata = imprsdatamref)
+outcomesfunc_outer(ef = "HFmrEF", impdata = imprsdatamref, impdatanb = imprsdatamref0)
 ```
 
 ```{r}
@@ -316,5 +308,5 @@ outcomesfunc_outer(ef = "HFmrEF", impdata = imprsdatamref)
 #| dependson: outcomesmedfunc
 #| tbl-cap: "Association between outcomes and CCI/GDMT - HFpEF"
 
-outcomesfunc_outer(ef = "HFpEF", impdata = imprsdatapef)
+outcomesfunc_outer(ef = "HFpEF", impdata = imprsdatapef, impdatanb = imprsdatapef0)
 ```

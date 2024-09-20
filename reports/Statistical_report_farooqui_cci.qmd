@@ -1,6 +1,5 @@
 ---
 title: "Statistical report: Charlson Comorbidity Index (CCI) in Heart Failure across the Ejection Fraction spectrum: association with clinical characteristics, EF category, medical therapy and outcomes"
-subtitle: Draft
 date: "`r Sys.Date()`"
 cover: static/ki_logo_vert_rgb.png
 editor: source
@@ -59,7 +58,7 @@ sheets <- names(wb)
 
 # load pptx file with figs
 figs <- officer::read_pptx(path = here::here("output/figs/figs.pptx"))
-pptx <- FALSE
+pptx <- TRUE
 ```           
 
 \newpage
@@ -68,7 +67,7 @@ pptx <- FALSE
 
 ## Data sources
 
-The Swedish Heart Failure Registry (SwedeHF) is an ongoing nationwide quality registry started in 2000, 
+The Swedish Heart Failure Registry (SwedeHF) is an ongoing nationwide quality register started in 2000, 
 that includes in- and out-hospital patients with HF, regardless of EF and previous history of HF[@swedehf]. 
 Around 80 variables are recorded at 
 discharge from hospital or at the outpatient visit, i.e. index date, and 
@@ -110,7 +109,7 @@ default_kable(flow) %>%
 First patient in: `r min(rsdata$shf_indexdtm)` and last patient in: `r max(rsdata$shf_indexdtm)` 
 from approximately `r rsdata %>% distinct(shf_centre) %>% count() %>% pull(n)` enrolling centers. 
 
-Baseline for this population is date of visits or date of discharge for the visit/hospitalization recorded in SwedeHF. 
+Baseline is date of visits or date of discharge for the visit/hospitalization recorded in SwedeHF. 
 
 {{< include src/flow_tab.qmd >}}
 
@@ -190,8 +189,8 @@ The association between GDMT and outcomes across CCI subgroups was modelled usin
 
 ### Assumptions
 
-TO BE CHECKED::: The proportional hazards assumption was investigated using the scaled Schoenfeld 
-residuals for the primary outcome leading to that XXX  was stratified for in the models. 
+The proportional hazards assumption was investigated using the scaled Schoenfeld 
+residuals leading to that `r paste0(stratavars, collapse =", ")` were stratified for in the models. 
 Possible outliers were visually inspected by plotting the dfbetas. 
 
 \clearpage

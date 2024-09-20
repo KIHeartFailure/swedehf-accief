@@ -49,7 +49,7 @@ vars <- vars %>%
     Variable = coalesce(label, var_tmp),
     # small fixes
     Variable = str_replace_all(Variable, fixed("Disposable income (100 SEK)"), "Income"), ,
-    Variable = str_replace_all(Variable, fixed("First heart failure hospitalization"), "Heart failure hospitalization"),
+    Variable = str_replace_all(Variable, fixed("First HF hospitalization"), "Heart failure hospitalization"),
     Variable = str_replace_all(Variable, fixed("First all-cause hospitalization"), "All-cause hospitalization"),
     Code = if_else(Variable == "Heart failure hospitalization", str_remove(Code, "\\,4[^.]*$"), Code),
     Code = if_else(Variable == "Non-CV death", "ICD-10 All exept I, J81, K761, R570, G45", Code),
@@ -88,9 +88,9 @@ vars <- vars %>%
     ),
     data5 = if_else(str_detect(var, "scb_famtype|scb_education|scb_dispincome"), "LISA", NA),
     data6 = if_else(str_detect(var, "scb_child"), "RTP", NA),
-    footnote1 = if_else(Variable == "Charlson Comorbidity Index", footnote_marker_alphabet(1, format = "latex"), ""),
+    footnote1 = if_else(Variable == "Charlson Comorbidity Index age-adjusted", footnote_marker_alphabet(1, format = "latex"), ""),
     footnote2 = if_else(str_detect(var, "sos_com") &
-      !Variable %in% c("Charlson Comorbidity Index"),
+      !Variable %in% c("Charlson Comorbidity Index age-adjusted"),
     footnote_marker_alphabet(2, format = "latex"), ""
     ),
     footnote3 = if_else(str_detect(var, "hosp") & str_detect(Variable, "All-cause", negate = T), footnote_marker_alphabet(3, format = "latex"), ""),

@@ -132,7 +132,7 @@ outvars <- tibble(
 ) %>%
   arrange(order)
 
-stratavars <- c("shf_location")
+stratavars <- c("shf_location", "shf_ntprobnp_cat")
 
 metavars <- bind_rows(
   metavars,
@@ -148,14 +148,15 @@ metavars <- bind_rows(
       "shf_sglt2dosetg_cat"
     ),
     label = c(
-      "Target dose ACEi/ARB/ARNi (%)",
-      "Target dose ACEi/ARB/ARNi (%)",
-      "Target dose beta-blocker (%)",
-      "Target dose beta-blocker (%)",
-      "Target dose MRA (%)",
-      "Target dose MRA (%)",
-      "Target dose SGLT2i (%)",
-      "Target dose SGLT2i (%)"
-    )
+      "Target dose ACEi/ARB/ARNi",
+      "Target dose ACEi/ARB/ARNi",
+      "Target dose beta-blocker",
+      "Target dose beta-blocker",
+      "Target dose MRA",
+      "Target dose MRA",
+      "Target dose SGLT2i",
+      "Target dose SGLT2i"
+    ),
+    unit = rep("%", 8)
   )
 )

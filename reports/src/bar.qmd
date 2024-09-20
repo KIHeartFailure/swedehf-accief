@@ -25,9 +25,10 @@ p <- ggplot(figdata, aes(x = shf_ef_cat, y = per, fill = sos_com_charlsonciage_c
     legend.position = "bottom",
     legend.box = "vertical",
     axis.text = element_text(color = "black"),
-    axis.title.x = element_blank()
+    axis.title.x = element_blank(),
+    legend.title = element_text(size = 21.6, face = "bold")
   ) +
-  labs(y = "Proportion (%)", fill = "CCI") +
+  labs(y = "Proportion (%)", fill = "ACCI") +
   geom_text(aes(label = fn(per, dec = 0)), position = position_dodge(width = 0.9), vjust = -0.25, size = 8, fontface = "bold")
 
 if (pptx) {
