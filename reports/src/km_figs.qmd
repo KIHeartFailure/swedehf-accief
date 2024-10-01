@@ -4,12 +4,12 @@
 #| cache.comments: false
 
 kmfunc <- function(efcats = c("HFrEF", "HFmrEF", "HFpEF"), time, event, eventname, rep, xvar = "sos_com_charlsonciage_cat",
-                   labposadj = ifelse(rep, c(0.08, 0.08, 0.08), c(0.05, 0.05, 0.05))) {
+                   labposadj = ifelse(rep, c(0.08, 0.08, 0.08), c(0.05, 0.05, 0.05)), repymax = 1.5, repdata = NULL) {
   data <- rsdata %>%
     filter(shf_ef_cat %in% efcats)
 
   if (rep) {
-    repdata <- rsdatarep %>%
+    repdata <- repdata %>%
       filter(shf_ef_cat %in% efcats)
   }
 
@@ -39,7 +39,7 @@ kmfunc <- function(efcats = c("HFrEF", "HFmrEF", "HFpEF"), time, event, eventnam
   }
 
   if (rep) {
-    fit <- mcf(formula(paste0("Recur(sos_outtime, lopnr, sos_out_hosphf == 'Yes') ~ ", xvar)), data = repdata)
+    fit <- mcf(formula(paste0("Recur(sos_outtime, lopnr, sos_out_hosp == 'Yes') ~ ", xvar)), data = repdata)
 
     plot_data <- tibble(
       "time" = fit@MCF$time,
@@ -53,8 +53,8 @@ kmfunc <- function(efcats = c("HFrEF", "HFmrEF", "HFpEF"), time, event, eventnam
         strata = fct_rev(factor(strata))
       )
 
-    ylim <- c(0, 1.5)
-    ylab <- "Cum mean HFH (/100 pts)"
+    ylim <- c(0, repymax)
+    ylab <- "Cummulative mean (/100 pts)"
   }
 
   annotate_data <- plot_data %>%
@@ -148,11 +148,32 @@ kmfunc <- function(efcats = c("HFrEF", "HFmrEF", "HFpEF"), time, event, eventnam
 #| cache.comments: false
 #| dependson: kmfunc
 #| fig-cap: "Cumulative incidence/Mean cumulative function"
-#| fig-subcap: !expr outvars$name[c(1, 5, 7)]
+#| fig-subcap: !expr outvars$name
 #| layout-ncol: 2
 #| layout-nrow: 3
 
 nr <- 1
+kmfunc(
+  time = outvars$time[nr],
+  event = outvars$var[nr],
+  eventname = outvars$shortname[nr],
+  rep = outvars$rep[nr]
+)
+nr <- 2
+kmfunc(
+  time = outvars$time[nr],
+  event = outvars$var[nr],
+  eventname = outvars$shortname[nr],
+  rep = outvars$rep[nr]
+)
+nr <- 3
+kmfunc(
+  time = outvars$time[nr],
+  event = outvars$var[nr],
+  eventname = outvars$shortname[nr],
+  rep = outvars$rep[nr]
+)
+nr <- 4
 kmfunc(
   time = outvars$time[nr],
   event = outvars$var[nr],
@@ -166,7 +187,24 @@ kmfunc(
   eventname = outvars$shortname[nr],
   rep = outvars$rep[nr]
 )
+nr <- 6
+kmfunc(
+  time = outvars$time[nr],
+  event = outvars$var[nr],
+  eventname = outvars$shortname[nr],
+  rep = outvars$rep[nr],
+  repdata = rsdatarepany, 
+  repymax = 5
+)
 nr <- 7
+kmfunc(
+  time = outvars$time[nr],
+  event = outvars$var[nr],
+  eventname = outvars$shortname[nr],
+  rep = outvars$rep[nr],
+  repdata = rsdatarephf
+)
+nr <- 8
 kmfunc(
   time = outvars$time[nr],
   event = outvars$var[nr],
@@ -181,11 +219,35 @@ kmfunc(
 #| cache.comments: false
 #| dependson: kmfunc
 #| fig-cap: "Cumulative incidence/Mean cumulative function - HFrEF"
-#| fig-subcap: !expr outvars$name[c(1, 5, 7)]
+#| fig-subcap: !expr outvars$name
 #| layout-ncol: 2
 #| layout-nrow: 1
 
 nr <- 1
+kmfunc(
+  efcats = "HFrEF",
+  time = outvars$time[nr],
+  event = outvars$var[nr],
+  eventname = outvars$shortname[nr],
+  rep = outvars$rep[nr]
+)
+nr <- 2
+kmfunc(
+  efcats = "HFrEF",
+  time = outvars$time[nr],
+  event = outvars$var[nr],
+  eventname = outvars$shortname[nr],
+  rep = outvars$rep[nr]
+)
+nr <- 3
+kmfunc(
+  efcats = "HFrEF",
+  time = outvars$time[nr],
+  event = outvars$var[nr],
+  eventname = outvars$shortname[nr],
+  rep = outvars$rep[nr]
+)
+nr <- 4
 kmfunc(
   efcats = "HFrEF",
   time = outvars$time[nr],
@@ -201,7 +263,26 @@ kmfunc(
   eventname = outvars$shortname[nr],
   rep = outvars$rep[nr]
 )
+nr <- 6
+kmfunc(
+  efcats = "HFrEF",
+  time = outvars$time[nr],
+  event = outvars$var[nr],
+  eventname = outvars$shortname[nr],
+  rep = outvars$rep[nr],
+  repdata = rsdatarepany, 
+  repymax = 5
+)
 nr <- 7
+kmfunc(
+  efcats = "HFrEF",
+  time = outvars$time[nr],
+  event = outvars$var[nr],
+  eventname = outvars$shortname[nr],
+  rep = outvars$rep[nr],
+  repdata = rsdatarephf
+)
+nr <- 8
 kmfunc(
   efcats = "HFrEF",
   time = outvars$time[nr],
@@ -217,11 +298,35 @@ kmfunc(
 #| cache.comments: false
 #| dependson: kmfunc
 #| fig-cap: "Cumulative incidence/Mean cumulative function - HFmrEF"
-#| fig-subcap: !expr outvars$name[c(1, 5, 7)]
+#| fig-subcap: !expr outvars$name
 #| layout-ncol: 2
 #| layout-nrow: 1
 
 nr <- 1
+kmfunc(
+  efcats = "HFmrEF",
+  time = outvars$time[nr],
+  event = outvars$var[nr],
+  eventname = outvars$shortname[nr],
+  rep = outvars$rep[nr]
+)
+nr <- 2
+kmfunc(
+  efcats = "HFmrEF",
+  time = outvars$time[nr],
+  event = outvars$var[nr],
+  eventname = outvars$shortname[nr],
+  rep = outvars$rep[nr]
+)
+nr <- 3
+kmfunc(
+  efcats = "HFmrEF",
+  time = outvars$time[nr],
+  event = outvars$var[nr],
+  eventname = outvars$shortname[nr],
+  rep = outvars$rep[nr]
+)
+nr <- 4
 kmfunc(
   efcats = "HFmrEF",
   time = outvars$time[nr],
@@ -237,7 +342,26 @@ kmfunc(
   eventname = outvars$shortname[nr],
   rep = outvars$rep[nr]
 )
+nr <- 6
+kmfunc(
+  efcats = "HFmrEF",
+  time = outvars$time[nr],
+  event = outvars$var[nr],
+  eventname = outvars$shortname[nr],
+  rep = outvars$rep[nr],
+  repdata = rsdatarepany, 
+  repymax = 5
+)
 nr <- 7
+kmfunc(
+  efcats = "HFmrEF",
+  time = outvars$time[nr],
+  event = outvars$var[nr],
+  eventname = outvars$shortname[nr],
+  rep = outvars$rep[nr],
+  repdata = rsdatarephf
+)
+nr <- 8
 kmfunc(
   efcats = "HFmrEF",
   time = outvars$time[nr],
@@ -253,11 +377,35 @@ kmfunc(
 #| cache.comments: false
 #| dependson: kmfunc
 #| fig-cap: "Cumulative incidence/Mean cumulative function - HFpEF"
-#| fig-subcap: !expr outvars$name[c(1, 5, 7)]
+#| fig-subcap: !expr outvars$name
 #| layout-ncol: 2
 #| layout-nrow: 3
 
 nr <- 1
+kmfunc(
+  efcats = "HFpEF",
+  time = outvars$time[nr],
+  event = outvars$var[nr],
+  eventname = outvars$shortname[nr],
+  rep = outvars$rep[nr]
+)
+nr <- 2
+kmfunc(
+  efcats = "HFpEF",
+  time = outvars$time[nr],
+  event = outvars$var[nr],
+  eventname = outvars$shortname[nr],
+  rep = outvars$rep[nr]
+)
+nr <- 3
+kmfunc(
+  efcats = "HFpEF",
+  time = outvars$time[nr],
+  event = outvars$var[nr],
+  eventname = outvars$shortname[nr],
+  rep = outvars$rep[nr]
+)
+nr <- 4
 kmfunc(
   efcats = "HFpEF",
   time = outvars$time[nr],
@@ -273,7 +421,26 @@ kmfunc(
   eventname = outvars$shortname[nr],
   rep = outvars$rep[nr]
 )
+nr <- 6
+kmfunc(
+  efcats = "HFpEF",
+  time = outvars$time[nr],
+  event = outvars$var[nr],
+  eventname = outvars$shortname[nr],
+  rep = outvars$rep[nr],
+  repdata = rsdatarepany, 
+  repymax = 5
+)
 nr <- 7
+kmfunc(
+  efcats = "HFpEF",
+  time = outvars$time[nr],
+  event = outvars$var[nr],
+  eventname = outvars$shortname[nr],
+  rep = outvars$rep[nr],
+  repdata = rsdatarephf
+)
+nr <- 8
 kmfunc(
   efcats = "HFpEF",
   time = outvars$time[nr],

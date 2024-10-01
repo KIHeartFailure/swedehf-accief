@@ -55,49 +55,93 @@ svpatreg <- left_join(
   mutate(sos_outtime = as.numeric(INDATUM - shf_indexdtm)) %>%
   filter(sos_outtime > 0 & sos_outtime <= global_followup & INDATUM <= censdtm)
 
-svpatreg <- svpatreg %>%
-  mutate(sos_out_hosphf = stringr::str_detect(HDIA, global_icdhf)) %>%
-  filter(sos_out_hosphf) %>%
+# hf
+svpatreghf <- svpatreg %>%
+  mutate(sos_out_hosp = stringr::str_detect(HDIA, global_icdhf)) %>%
+  filter(sos_out_hosp) %>%
   select(-INDATUM, -HDIA)
 
-rsdatarep <- bind_rows(
+rsdatarephf <- bind_rows(
   rsdata %>%
     select(
       lopnr, shf_indexdtm, sos_com_charlsonciage_cat, shf_ef_cat, censdtm
     ),
-  svpatreg
+  svpatreghf
 ) %>%
   mutate(
-    sos_out_hosphf = if_else(is.na(sos_out_hosphf), 0, 1),
+    sos_out_hosp = if_else(is.na(sos_out_hosp), 0, 1),
     sos_outtime = as.numeric(if_else(is.na(sos_outtime), as.numeric(censdtm - shf_indexdtm), sos_outtime))
   )
 
-rsdatarep <- rsdatarep %>%
+rsdatarephf <- rsdatarephf %>%
   group_by(lopnr, shf_indexdtm, sos_outtime) %>%
-  arrange(desc(sos_out_hosphf)) %>%
+  arrange(desc(sos_out_hosp)) %>%
   slice(1) %>%
   ungroup() %>%
   arrange(lopnr, shf_indexdtm)
 
-rsdatarep <- rsdatarep %>%
+rsdatarephf <- rsdatarephf %>%
   mutate(
     extra = 0
   )
 
-extrarsdatarep <- rsdatarep %>%
+extrarsdatarephf <- rsdatarephf %>%
   group_by(lopnr) %>%
   arrange(sos_outtime) %>%
   slice(n()) %>%
   ungroup() %>%
-  filter(sos_out_hosphf == 1) %>%
+  filter(sos_out_hosp == 1) %>%
   mutate(
-    sos_out_hosphf = 0,
+    sos_out_hosp = 0,
     extra = 1
   )
 
-rsdatarep <- bind_rows(rsdatarep, extrarsdatarep) %>%
+rsdatarephf <- bind_rows(rsdatarephf, extrarsdatarephf) %>%
   arrange(lopnr, sos_outtime, extra) %>%
-  mutate(sos_out_hosphf = factor(sos_out_hosphf, levels = 0:1, labels = c("No", "Yes")))
+  mutate(sos_out_hosp = factor(sos_out_hosp, levels = 0:1, labels = c("No", "Yes")))
+
+
+# ac
+rsdatarepany <- bind_rows(
+  rsdata %>%
+    select(
+      lopnr, shf_indexdtm, sos_com_charlsonciage_cat, shf_ef_cat, censdtm
+    ),
+  svpatreg %>% 
+    select(-INDATUM, -HDIA) %>%
+    mutate(sos_out_hosp = TRUE)
+) %>%
+  mutate(
+    sos_out_hosp = if_else(is.na(sos_out_hosp), 0, 1),
+    sos_outtime = as.numeric(if_else(is.na(sos_outtime), as.numeric(censdtm - shf_indexdtm), sos_outtime))
+  )
+
+rsdatarepany <- rsdatarepany %>%
+  group_by(lopnr, shf_indexdtm, sos_outtime) %>%
+  arrange(desc(sos_out_hosp)) %>%
+  slice(1) %>%
+  ungroup() %>%
+  arrange(lopnr, shf_indexdtm)
+
+rsdatarepany <- rsdatarepany %>%
+  mutate(
+    extra = 0
+  )
+
+extrarsdatarepany <- rsdatarepany %>%
+  group_by(lopnr) %>%
+  arrange(sos_outtime) %>%
+  slice(n()) %>%
+  ungroup() %>%
+  filter(sos_out_hosp == 1) %>%
+  mutate(
+    sos_out_hosp = 0,
+    extra = 1
+  )
+
+rsdatarepany <- bind_rows(rsdatarepany, extrarsdatarepany) %>%
+  arrange(lopnr, sos_outtime, extra) %>%
+  mutate(sos_out_hosp = factor(sos_out_hosp, levels = 0:1, labels = c("No", "Yes")))
 
 rm(patregrsdata)
 gc()
