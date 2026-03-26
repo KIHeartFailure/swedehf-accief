@@ -262,6 +262,7 @@ kmfunc(
 
 nr <- 1
 kmfunc(
+  efcats = "HFrEF",
   time = outvars$time[nr],
   event = outvars$var[nr],
   eventname = outvars$shortname[nr],
@@ -269,6 +270,7 @@ kmfunc(
 )
 nr <- 2
 kmfunc(
+  efcats = "HFrEF",
   time = outvars$time[nr],
   event = outvars$var[nr],
   eventname = outvars$shortname[nr],
@@ -276,6 +278,7 @@ kmfunc(
 )
 nr <- 3
 kmfunc(
+  efcats = "HFrEF",
   time = outvars$time[nr],
   event = outvars$var[nr],
   eventname = outvars$shortname[nr],
@@ -283,6 +286,7 @@ kmfunc(
 )
 nr <- 4
 kmfunc(
+  efcats = "HFrEF",
   time = outvars$time[nr],
   event = outvars$var[nr],
   eventname = outvars$shortname[nr],
@@ -290,6 +294,7 @@ kmfunc(
 )
 nr <- 5
 kmfunc(
+  efcats = "HFrEF",
   time = outvars$time[nr],
   event = outvars$var[nr],
   eventname = outvars$shortname[nr],
@@ -297,6 +302,7 @@ kmfunc(
 )
 nr <- 6
 kmfunc(
+  efcats = "HFrEF",
   time = outvars$time[nr],
   event = outvars$var[nr],
   eventname = outvars$shortname[nr],
@@ -306,6 +312,7 @@ kmfunc(
 )
 nr <- 7
 kmfunc(
+  efcats = "HFrEF",
   time = outvars$time[nr],
   event = outvars$var[nr],
   eventname = outvars$shortname[nr],
@@ -314,6 +321,7 @@ kmfunc(
 )
 nr <- 8
 kmfunc(
+  efcats = "HFrEF",
   time = outvars$time[nr],
   event = outvars$var[nr],
   eventname = outvars$shortname[nr],
@@ -341,6 +349,7 @@ kmfunc(
 
 nr <- 1
 kmfunc(
+  efcats = "HFmrEF",
   time = outvars$time[nr],
   event = outvars$var[nr],
   eventname = outvars$shortname[nr],
@@ -348,6 +357,7 @@ kmfunc(
 )
 nr <- 2
 kmfunc(
+  efcats = "HFmrEF",
   time = outvars$time[nr],
   event = outvars$var[nr],
   eventname = outvars$shortname[nr],
@@ -355,6 +365,7 @@ kmfunc(
 )
 nr <- 3
 kmfunc(
+  efcats = "HFmrEF",
   time = outvars$time[nr],
   event = outvars$var[nr],
   eventname = outvars$shortname[nr],
@@ -362,6 +373,7 @@ kmfunc(
 )
 nr <- 4
 kmfunc(
+  efcats = "HFmrEF",
   time = outvars$time[nr],
   event = outvars$var[nr],
   eventname = outvars$shortname[nr],
@@ -369,6 +381,7 @@ kmfunc(
 )
 nr <- 5
 kmfunc(
+  efcats = "HFmrEF",
   time = outvars$time[nr],
   event = outvars$var[nr],
   eventname = outvars$shortname[nr],
@@ -376,6 +389,7 @@ kmfunc(
 )
 nr <- 6
 kmfunc(
+  efcats = "HFmrEF",
   time = outvars$time[nr],
   event = outvars$var[nr],
   eventname = outvars$shortname[nr],
@@ -385,6 +399,7 @@ kmfunc(
 )
 nr <- 7
 kmfunc(
+  efcats = "HFmrEF",
   time = outvars$time[nr],
   event = outvars$var[nr],
   eventname = outvars$shortname[nr],
@@ -393,6 +408,7 @@ kmfunc(
 )
 nr <- 8
 kmfunc(
+  efcats = "HFmrEF",
   time = outvars$time[nr],
   event = outvars$var[nr],
   eventname = outvars$shortname[nr],
@@ -420,6 +436,7 @@ kmfunc(
 
 nr <- 1
 kmfunc(
+  efcats = "HFpEF",
   time = outvars$time[nr],
   event = outvars$var[nr],
   eventname = outvars$shortname[nr],
@@ -427,6 +444,7 @@ kmfunc(
 )
 nr <- 2
 kmfunc(
+  efcats = "HFpEF",
   time = outvars$time[nr],
   event = outvars$var[nr],
   eventname = outvars$shortname[nr],
@@ -434,6 +452,7 @@ kmfunc(
 )
 nr <- 3
 kmfunc(
+  efcats = "HFpEF",
   time = outvars$time[nr],
   event = outvars$var[nr],
   eventname = outvars$shortname[nr],
@@ -441,6 +460,7 @@ kmfunc(
 )
 nr <- 4
 kmfunc(
+  efcats = "HFpEF",
   time = outvars$time[nr],
   event = outvars$var[nr],
   eventname = outvars$shortname[nr],
@@ -448,6 +468,7 @@ kmfunc(
 )
 nr <- 5
 kmfunc(
+  efcats = "HFpEF",
   time = outvars$time[nr],
   event = outvars$var[nr],
   eventname = outvars$shortname[nr],
@@ -455,6 +476,7 @@ kmfunc(
 )
 nr <- 6
 kmfunc(
+  efcats = "HFpEF",
   time = outvars$time[nr],
   event = outvars$var[nr],
   eventname = outvars$shortname[nr],
@@ -464,6 +486,7 @@ kmfunc(
 )
 nr <- 7
 kmfunc(
+  efcats = "HFpEF",
   time = outvars$time[nr],
   event = outvars$var[nr],
   eventname = outvars$shortname[nr],
@@ -472,6 +495,7 @@ kmfunc(
 )
 nr <- 8
 kmfunc(
+  efcats = "HFpEF",
   time = outvars$time[nr],
   event = outvars$var[nr],
   eventname = outvars$shortname[nr],
