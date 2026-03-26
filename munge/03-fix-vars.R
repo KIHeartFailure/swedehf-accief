@@ -9,6 +9,26 @@ rsdata <- cut_surv(rsdata, sos_out_death, sos_outtime_death, global_followup, cu
 
 rsdata <- rsdata %>%
   mutate(
+    sos_out_deathcvhosphf_cr = factor(create_crevent(sos_out_deathcvhosphf, sos_out_death, eventvalues = c("Yes", "Yes")),
+      levels = 0:2,
+      labels = c("censor", "event", "death")
+    ),
+    sos_out_hosphf_cr = factor(create_crevent(sos_out_hosphf, sos_out_death, eventvalues = c("Yes", "Yes")),
+      levels = 0:2,
+      labels = c("censor", "event", "death")
+    ),
+    sos_out_hospany_cr = factor(create_crevent(sos_out_hospany, sos_out_death, eventvalues = c("Yes", "Yes")),
+      levels = 0:2,
+      labels = c("censor", "event", "death")
+    ),
+    sos_out_deathcv_cr = factor(create_crevent(sos_out_deathcv, sos_out_death, eventvalues = c("Yes", "Yes")),
+      levels = 0:2,
+      labels = c("censor", "event", "death")
+    ),
+    sos_out_deathnoncv_cr = factor(create_crevent(sos_out_deathnoncv, sos_out_death, eventvalues = c("Yes", "Yes")),
+      levels = 0:2,
+      labels = c("censor", "event", "death")
+    ),
     censdtm = pmin(shf_indexdtm + global_followup, censdtm),
     shf_arbdosetg = case_when(
       shf_arbsub == "Candesartan" ~ shf_arbdose / 32,

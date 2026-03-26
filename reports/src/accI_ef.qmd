@@ -4,7 +4,7 @@
 #| cache.comments: false
 #| output: false
 
-crudemod <- summary(crudemodraw <- multinom(shf_ef_cat ~ sos_com_charlsonciage_cat, data = rsdata))
+crudemod <- summary(crudemodraw <- multinom(shf_ef_cat ~ sos_com_charlsonciage_cat, data = rsdata, trace = F))
 crude <- tibble(
   type = "Crude",
   var = rep(colnames(crudemod$coefficients), each = 2),
@@ -26,11 +26,11 @@ crude <- tibble(
   filter(!var %in% c("(Intercept)"))
 
 modvarstmp <- setdiff(modvars, "shf_ef_cat")
-adjmod <- with(imprsdata, multinom(formula(paste0("shf_ef_cat ~ sos_com_charlsonciage_cat + ", paste(modvarstmp, collapse = " + ")))))
+adjmod <- with(imprsdata, multinom(formula(paste0("shf_ef_cat ~ sos_com_charlsonciage_cat + ", paste(modvarstmp, collapse = " + "))), trace = F))
 adjmod <- summary(pool(adjmod))
 adj <- tibble(
   type = "Adjusted",
-  ef = adjmod$y.level,
+  ef = rep(levels(rsdata$shf_ef_cat)[2:3], each = length(adjmod$term) / 2),
   var = as.character(adjmod$term),
   or = exp(adjmod$estimate),
   lci = exp(adjmod$estimate - global_z05 * adjmod$std.error),
@@ -55,7 +55,7 @@ adj <- tibble(
 #| label: fig-accief
 #| cache: true
 #| cache.comments: false
-#| dependson: predictors
+#| dependson: accief
 #| fig-cap: "Association between CCI and EF"
 #| fig-width: 10
 #| fig-height: 6

@@ -174,8 +174,7 @@ The following outcomes are considered:
 - `r paste0(outvars$name[7], " (", outvars$shortname[7], ")")`
 - `r paste0(outvars$name[8], " (", outvars$shortname[8], ") (primary outcome)")`
 
-Time to first events were presented with cumulative incidence curves and 
-the mean cumulative function was used to depict the recurrent events by EF och CCI. 
+Time to first events were presented with cumulative incidence curves using the Kaplan-Meier estimate for the outcome death and the Aalen-Johansen estimate, considering death as a competing event, for the other outcomes. The mean cumulative function was used to depict the recurrent events by EF och CCI. 
 
 Crude and adjusted analyses were performed where adjustment was performed for 
 variables indicated in @tbl-base. 
@@ -242,9 +241,9 @@ The median (q1-q3) age is `r med` and `r percfem`% females. The median (q1-q3) A
 ```{r}
 medsurv <- rsdata %>%
   summarise(
-    med = fn(median(sos_outtime_death / 365.25), dig = 0),
-    min = fn(min(sos_outtime_death / 365.25), dig = 0),
-    max = fn(max(sos_outtime_death / 365.25), dig = 0)
+    med = fn(median(sos_outtime_death / 365.25 * 12), dig = 0),
+    min = fn(min(sos_outtime_death / 365.25 * 12), dig = 0),
+    max = fn(max(sos_outtime_death / 365.25 * 12), dig = 0)
   ) %>%
   mutate(out = paste0(med, " (", min, "-", max, ")")) %>%
   pull(out)
@@ -255,13 +254,13 @@ sumsurv <- rsdata %>%
 ```
 
 The median (min-max) follow-up is 
-`r medsurv` years for a total of `r sumsurv` patient-years of follow-up.
+`r medsurv` months for a total of `r sumsurv` patient-years of follow-up.
 
 {{< include src/outcomes.qmd >}}
 \clearpage
 {{< include src/km_figs.qmd >}}
 \clearpage
-{{< include src/outcomes_med.qmd >}}
+<!-- {{< include src/outcomes_med.qmd >}} -->
 
 \clearpage
 
