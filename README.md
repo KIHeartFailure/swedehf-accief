@@ -24,4 +24,4 @@ Workflow:
 
 ## Publication
 
-... 
+https://doi.org/10.1093/eschf/xvag165
